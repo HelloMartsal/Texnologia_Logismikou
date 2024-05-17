@@ -10,24 +10,21 @@ export default class User extends Account {
     });
   }
 
-  isUser(req, res, next) {
+  async isUser(req, res, next) {
     const userId = req.session.userId; // Get the user ID from the session
   
-    // Query the database to check if the user ID belongs to an admin
-    this.db.query('SELECT username_u FROM user WHERE username_u = ?', [userId], (err, results) => {
-      if (err) {
+    try {
+        const results = await this.db.query('SELECT username_u FROM user WHERE username_u = ?', [userId]);
+        if (results.length > 0) {
+            // User is an admin based on the query results
+            //res.send(`Admin ID: ${userId}`);
+            return next();
+        } else {
+            res.status(401).send('Unauthorized. Insufficient permissions.');
+        }
+    } catch (err) {
         console.error('Error fetching admin user IDs:', err);
         res.status(500).send('Error occurred.');
-        return;
-      }
-  
-      if (results.length > 0) {
-        // User is an admin based on the query results
-        //res.send(`Admin ID: ${userId}`);
-        return next();
-      } else {
-        res.status(401).send('Unauthorized. Insufficient permissions.');
-      }
-    });
-  }
+    }
+    }
 }
