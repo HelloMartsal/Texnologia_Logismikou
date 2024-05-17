@@ -29,7 +29,9 @@ export default class App {
     this.app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, '..', 'login.html'));
     });
-
+    this.app.get("/signup", (req, res) => {
+      res.sendFile(path.join(__dirname, '..', 'signup.html'));
+    });
     this.app.use('/user', new User(db).router);
     this.app.use('/admin', new Admin(db).router);
     this.app.use('/tech', new Tech(db).router);
@@ -44,7 +46,7 @@ export default class App {
       
           const message = results[0][0].message;
       
-          if (['Data transferred from admin successfully.', 'Data transferred from citizen successfully.', 'Data transferred from rescuer successfully.'].includes(message)) {
+          if (['Data transferred from admin successfully.', 'Data transferred from user successfully.', 'Data transferred from tech successfully.'].includes(message)) {
             const getUserIdResults = await this.db.query(getUserIdSql, [username, passwd]);
       
             if (getUserIdResults && getUserIdResults.length > 0) {
@@ -55,9 +57,9 @@ export default class App {
       
                 if (message === 'Data transferred from admin successfully.') {
                   res.redirect(`/admin`);
-                } else if (message === 'Data transferred from citizen successfully.') {
+                } else if (message === 'Data transferred from user successfully.') {
                   res.redirect(`/user`);
-                } else {
+                } else if (message === 'Data transferred from tech successfully.') {
                   res.redirect(`/tech`);
                 }
               } else {
@@ -72,6 +74,32 @@ export default class App {
         } catch (err) {
           console.error('Error during login query:', err);
           res.status(500).send('Error occurred during login');
+        }
+      });
+      this.app.post('/signup', async (req, res) => {
+        const username = req.body.username;
+        const passwd = req.body.password;
+        const phone = req.body.phone;
+        const name = req.body.name;
+        const surname = req.body.surname;
+        const address = req.body.address;
+        const email = req.body.email;
+        const date = new Date().toISOString().split('T')[0];      
+        const addAccountSql = "CALL addAccount(?,?,?,?,?,?,?,?)";
+      
+        try {
+          const results = await this.db.query(addAccountSql, [username, passwd, phone, name, surname, address, email, date]);
+      
+          const message = results[0][0].message;
+      
+          if (message === 'Citizen submitted successfully') {
+            res.send('You are submitted');
+          } else {
+            res.send(message);
+          }
+        } catch (err) {
+          console.error('Error during signup query:', err);
+          res.status(500).send('Error occurred during signup');
         }
       });
   }
