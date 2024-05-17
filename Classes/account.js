@@ -3,7 +3,8 @@ import express from 'express';
 export default class Account {
   constructor(db) {
     this.router = express.Router();
-    this.db = db;
+    this.db = db.connection;
+    this.isLogged = this.isLogged.bind(this);
   }
 
   isAuthenticated(req, res, next) {
@@ -20,7 +21,7 @@ export default class Account {
     const userId = req.session.userId; // Get the user ID from the session
   
     // Query the database to check if the user ID belongs to an admin
-    db.query('SELECT username FROM log WHERE username = ?', [userId], (err, results) => {
+    this.db.query('SELECT username FROM log WHERE username = ?', [userId], (err, results) => {
       if (err) {
         console.error('Error fetching  users IDs:', err);
         res.status(500).send('Error occurred.');

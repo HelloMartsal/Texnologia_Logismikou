@@ -7,6 +7,7 @@ export default class User extends Account {
     this.router.get('/', this.isAuthenticated, this.isUser, this.isLogged, (req, res) => {
       res.send('Welcome user!');
     });
+    this.isUser = this.isUser.bind(this);
   }
 
   isUser(req, res, next) {

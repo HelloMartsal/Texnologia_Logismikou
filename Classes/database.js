@@ -1,4 +1,5 @@
 import mysql from "mysql";
+import { promisify } from "util";
 
 export default class Database {
   constructor() {
@@ -8,12 +9,21 @@ export default class Database {
       password: "admin132002!",
       database: "tech",
     });
+
+    // Promisify the query method
+    this.connection.query = promisify(this.connection.query);
   }
 
   connect() {
-    this.connection.connect((err) => {
-      if (err) throw err;
-      console.log("Connected to the database!");
+    return new Promise((resolve, reject) => {
+      this.connection.connect((err) => {
+        if (err) {
+          console.error('Error connecting to the database!');
+          return reject(err);
+        }
+        console.log('Connected to the database!');
+        resolve(this.connection);
+      });
     });
   }
 }

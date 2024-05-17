@@ -7,6 +7,7 @@ export default class Admin extends Account {
     this.router.get('/', this.isAuthenticated, this.isAdmin, this.isLogged, (req, res) => {
       res.send('Welcome admin!');
     });
+    this.isAdmin = this.isAdmin.bind(this);
   }
 
   isAdmin(req, res, next) {
