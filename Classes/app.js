@@ -22,7 +22,6 @@ export default class App {
         secret: 'your_secret_key',
         resave: false,
         saveUninitialized: false,
-        // Add other session configurations as needed
       })
     );
 

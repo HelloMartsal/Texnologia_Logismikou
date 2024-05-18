@@ -1,4 +1,9 @@
 import Account from './account.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default class User extends Account {
   constructor(db) {
@@ -6,8 +11,9 @@ export default class User extends Account {
     this.isUser = this.isUser.bind(this);
 
     this.router.get('/', this.isAuthenticated, this.isUser, this.isLogged, (req, res) => {
-      res.send('Welcome user!');
+      res.sendFile(path.join(__dirname, '..', 'main_page.html'));
     });
+    
   }
 
   async isUser(req, res, next) {
