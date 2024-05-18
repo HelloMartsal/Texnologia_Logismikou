@@ -1,6 +1,6 @@
-import Account from './account.js';
+import account_router from './account.js';
 
-export default class Tech extends Account {
+export default class tech_router extends account_router {
     constructor(db) {
         super(db);
       

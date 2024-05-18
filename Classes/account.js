@@ -1,6 +1,6 @@
 import express from 'express';
 
-export default class Account {
+export default class account_router {
   constructor(db) {
     this.router = express.Router();
     this.db = db.connection;

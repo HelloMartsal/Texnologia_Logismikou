@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import session from "express-session";
 import bodyParser from'body-parser';
-
+import Database from "./Classes/database.js";
 
 
 
@@ -12,7 +12,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-
+const database = new Database();
+database.connect();
+const db = database.connection;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -22,24 +24,13 @@ app.use(
     secret: 'your_secret_key',
     resave: false,
     saveUninitialized: false,
-    // Add other session configurations as needed
   })
 );
 
-const db = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "admin132002!",
-    database: "tech",
-  });
 
 
 
 
-  app.get("/", (req, res) => {
-    res.sendFile(__dirname + '/login.html');
-    
-});
 
 
 function isAuthenticated(req, res, next) {
@@ -147,147 +138,109 @@ function isAuthenticated(req, res, next) {
 
   }
 
+app.post('/', async (req, res) => {
+  const username = req.body.username;
+  const passwd = req.body.passwd;
+  const sql = "CALL login(?,?)";
+  const getUserIdSql = "CALL getId(?,?)";
 
+  try {
+    const results = await db.query(sql, [username, passwd]);
 
+    const message = results[0][0].message;
 
+    if (['Data transferred from admin successfully.', 'Data transferred from user successfully.', 'Data transferred from tech successfully.'].includes(message)) {
+      const getUserIdResults = await db.query(getUserIdSql, [username, passwd]);
 
+      if (getUserIdResults && getUserIdResults.length > 0) {
+        const userId = getUserIdResults[0][0].userId;
 
-app.post('/',  (req, res) => {
-   
-    const username = req.body.username;
-    const passwd = req.body.password;
+        if (userId) {
+          req.session.userId = userId;
 
-
-    const sql = "CALL login(?,?)";
-    const getUserIdSql = "CALL getId(?,?)";
-    
-    
-    
-   
- 
-    db.query(sql, [username, passwd], (err, results) => {
-      if (err) {
-        console.error('Error during login query:', err);
-        res.status(500).send('Error occurred during login');
-        return;
+          if (message === 'Data transferred from admin successfully.') {
+            res.redirect(`/admin`);
+          } else if (message === 'Data transferred from user successfully.') {
+            res.redirect(`/user`);
+          } else if (message === 'Data transferred from tech successfully.') {
+            res.redirect(`/tech`);
+          }
+        } else {
+          res.status(401).send('Invalid credentials. Please try again.');
+        }
+      } else {
+        res.status(401).send('User not found.');
       }
-
-
-
-
-
-    
-      const message = results[0][0].message;
-      
-
-    if (message === 'Data transferred from admin successfully.') {
-      db.query(getUserIdSql, [username, passwd], (getUserIdErr, getUserIdResults) => {
-        if (getUserIdErr) {
-          console.error('Error getting user ID:', getUserIdErr);
-          res.status(500).send('Error occurred while getting user ID');
-          
-          return;
-        }
-
-        if (getUserIdResults && getUserIdResults.length > 0) {
-          const userId = getUserIdResults[0][0].userId;
-          //res.send(`Admin ID: ${userId}`);
-         // res.redirect(`/admin/${userId}`); 
-
-          if (userId) {
-            req.session.userId = userId;
-            res.redirect(`/admin`); // Redirect to admin route with userId
-          } else {
-            res.status(401).send('Invalid credentials. Please try again.');
-          }
-        } else {
-          res.status(401).send('User not found.');
-        }
-      });
-      
-     
-        //res.redirect('/admin/:id'); 
-    } else if (message === 'Data transferred from citizen successfully.') {
-      db.query(getUserIdSql, [username, passwd], (getUserIdErr, getUserIdResults) => {
-        if (getUserIdErr) {
-          console.error('Error getting user ID:', getUserIdErr);
-          res.status(500).send('Error occurred while getting user ID');
-          
-          return;
-        }
-
-        if (getUserIdResults && getUserIdResults.length > 0) {
-          const userId = getUserIdResults[0][0].userId;
-           
-
-          if (userId) {
-            req.session.userId = userId;
-            res.redirect(`/user`); // Redirect to citizen route with userId
-          } else {
-            res.status(401).send('Invalid credentials. Please try again.');
-          }
-        } else {
-          res.status(401).send('User not found.');
-        }
-      });
-
-        //res.redirect('/citizen');
-    } else if (message === 'Data transferred from rescuer successfully.') {
-      db.query(getUserIdSql, [username, passwd], (getUserIdErr, getUserIdResults) => {
-        if (getUserIdErr) {
-          console.error('Error getting user ID:', getUserIdErr);
-          res.status(500).send('Error occurred while getting user ID');
-          
-          return;
-        }
-
-        if (getUserIdResults && getUserIdResults.length > 0) {
-          const userId = getUserIdResults[0][0].userId;
-          
-
-          if (userId) {
-            req.session.userId = userId;
-            res.redirect(`/tech`); // Redirect to rescuer route with userId
-          } else {
-            res.status(401).send('Invalid credentials. Please try again.');
-          }
-        } else {
-          res.status(401).send('User not found.');
-        }
-      });
-       // res.redirect('/rescuer');
-    } else  {
-        res.send(message);
+    } else {
+      res.send(message);
     }
+  } catch (err) {
+    console.error('Error during login query:', err);
+    res.status(500).send('Error occurred during login');
+  }
+});
+
+app.get("/signup", (req, res) => {
+  res.sendFile(__dirname + '/signup.html');
+});
+
+app.post('/signup', async (req, res) => {
+  const username = req.body.username;
+  const passwd = req.body.password;
+  const phone = req.body.phone;
+  const name = req.body.name;
+  const surname = req.body.surname;
+  const address = req.body.address;
+  const email = req.body.email;
+  const date = new Date().toISOString().split('T')[0];      
+  const addAccountSql = "CALL addAccount(?,?,?,?,?,?,?,?)";
+
+  try {
+    const results = await db.query(addAccountSql, [username, passwd, phone, name, surname, address, email, date]);
+
+    const message = results[0][0].message;
+
+    if (message === 'Account submitted successfully') {
+      res.redirect(`/`);
+    } else {
+      res.send(message);
+    }
+  } catch (err) {
+    console.error('Error during signup query:', err);
+    res.status(500).send('Error occurred during signup');
+  }
+});
+
+
+
+
+app.get('/login', (req, res) => {
+  res.sendFile(__dirname + '/login.html');
+});
+
+
+app.get('/user', isAuthenticated, isUser, isLogged, (req, res) => {
   
-    
+  res.sendFile(__dirname + '/main_page.html');
+});
+app.get('/',isAuthenticated,isUser,isLogged,(req,res)=>{
+  res.sendFile(__dirname + '/main_page.html');
+});
 
-      
-    });
-
-    
-  });
+app.get('/tech', isAuthenticated, isTech, isLogged, (req, res) => {
   
+  res.send('Welcome tech!');
+});
 
+app.get('/admin', isAuthenticated, isAdmin, isLogged, (req, res) => {
+  
+  res.send('Welcome admin!');
+});
 
-
-  app.get('/user', isAuthenticated, isUser, isLogged, (req, res) => {
-    
-    res.send('Welcome user!');
-  });
-
-  app.get('/tech', isAuthenticated, isTech, isLogged, (req, res) => {
-    
-    res.send('Welcome tech!');
-  });
-
-  app.get('/admin', isAuthenticated, isAdmin, isLogged, (req, res) => {
-    
-    res.send('Welcome admin!');
-  });
+  
 
 
 
 app.listen(8800, () => {
-    console.log("Connected to backend.");
-  });
+  console.log("Connected to backend.");
+});
