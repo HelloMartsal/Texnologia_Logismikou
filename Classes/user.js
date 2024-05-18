@@ -1,11 +1,11 @@
-import Account from './account.js';
+import account_router from './account.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default class User extends Account {
+export default class user_router extends account_router {
   constructor(db) {
     super(db);
     this.isUser = this.isUser.bind(this);

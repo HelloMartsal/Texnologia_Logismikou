@@ -1,6 +1,6 @@
-import Account from './account.js';
+import account_router from './account.js';
 
-export default class Admin extends Account {
+export default class admin_router extends account_router {
   constructor(db) {
     super(db);
     this.isAdmin = this.isAdmin.bind(this);

@@ -3,9 +3,9 @@ import session from "express-session";
 import bodyParser from'body-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import User from './user.js';
-import Admin from './admin.js';
-import Tech from './tech.js';
+import user_router from "./user.js";
+import admin_router from "./admin.js";
+import tech_router from "./tech.js";
 
 export default class App {
   constructor(db) {
@@ -31,12 +31,12 @@ export default class App {
     this.app.get("/signup", (req, res) => {
       res.sendFile(path.join(__dirname, '..', 'signup.html'));
     });
-    this.app.get('/find_tech.html', function(req, res) {
-      res.sendFile(path.join(__dirname, '..', 'find_tech.html'));
+    this.app.get('/user',this.isAuthenticated, this.isUser, this.isLogged, (req, res) =>{
+      res.sendFile(path.join(__dirname, '..', 'main_page.html'));
     });
-    this.app.use('/user', new User(db).router);
-    this.app.use('/admin', new Admin(db).router);
-    this.app.use('/tech', new Tech(db).router);
+  
+    this.app.use('/admin', new admin_router(db).router);
+    this.app.use('/tech', new tech_router(db).router);
     this.app.post('/', async (req, res) => {
         const username = req.body.username;
         const passwd = req.body.passwd;
