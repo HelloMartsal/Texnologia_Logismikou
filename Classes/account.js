@@ -23,7 +23,6 @@ export default class Account {
     try {
         // Query the database to check if the user ID belongs to an admin
         const [results] = await this.db.query('SELECT username FROM log WHERE username = ?', [userId]);
-        console.log(results);
         
 
         if (results.username) {
@@ -37,5 +36,4 @@ export default class Account {
         res.status(500).send('Error occurred.');
     }
   }
-  
 }

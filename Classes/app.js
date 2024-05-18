@@ -31,6 +31,9 @@ export default class App {
     this.app.get("/signup", (req, res) => {
       res.sendFile(path.join(__dirname, '..', 'signup.html'));
     });
+    this.app.get('/find_tech.html', function(req, res) {
+      res.sendFile(path.join(__dirname, '..', 'find_tech.html'));
+    });
     this.app.use('/user', new User(db).router);
     this.app.use('/admin', new Admin(db).router);
     this.app.use('/tech', new Tech(db).router);
