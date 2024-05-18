@@ -28,7 +28,7 @@ export default class User extends Account {
         }
     } catch (err) {
         console.error('Error fetching admin user IDs:', err);
-        res.status(500).send('Error occurred.');
+        res.status(500).send('Error occurred.');  
     }
   }
 }
