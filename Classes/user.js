@@ -22,8 +22,6 @@ export default class User extends Account {
     try {
         const results = await this.db.query('SELECT username_u FROM user WHERE username_u = ?', [userId]);
         if (results.length > 0) {
-            // User is an admin based on the query results
-            //res.send(`Admin ID: ${userId}`);
             return next();
         } else {
             res.status(401).send('Unauthorized. Insufficient permissions.');
