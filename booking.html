@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking History</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <h1>Booking History</h1>
+  <button id="get-bookings">Get Bookings</button>
+  <div id="booking-history"></div>
+
+  <script>
+    $(document).ready(function () {
+      $("#get-bookings").click(async function () {
+        try {
+          const response = await $.ajax({
+            url: "/api/booking",
+            method: "GET",
+          });
+
+          let data = response.data;
+
+          let html;
+          if (data.length > 0) {
+            html = `<table>
+              <thead>
+                <tr>
+                  <th>Reservation ID</th>
+                  <th>Service</th>
+                  <th>Specialty</th>
+                  <th>Technician</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>`;
+
+            for (const booking of data) {
+              html += `<tr>
+                <td>${booking.ResID}</td>
+                <td>${booking.service_name}</td>
+                <td>${booking.specialty_name}</td>
+                <td>${booking.name} ${booking.surname}</td>
+                <td>${new Date(booking.ResDate).toLocaleDateString()}</td>
+                <td>${booking.ResTime}</td>
+              </tr>`;
+            }
+
+            html += `</tbody>
+            </table>`;
+          } else {
+            html = "<p>No booking history found.</p>";
+          }
+
+          $("#booking-history").html(html);
+        } catch (error) {
+          console.error("An error occurred:", error);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
