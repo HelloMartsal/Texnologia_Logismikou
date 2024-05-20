@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html>
+<link href="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.js"></script>
 <head>
     <title>Find Tech</title>
     <style>
@@ -14,7 +16,7 @@
             z-index: 1;
             top: 0;
             left: 0;
-            background-color: #111;
+            background-color: #ff00b3;
             padding-top: 60px;
         }
 
@@ -50,23 +52,124 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar">
-            <a href="/api/techs" alt="Filter 1">Filter 1</a>
-            <a href="#" alt="Filter 2">Filter 2</a>
-            <a href="#" alt="Filter 3">Filter 3</a>
-        </div>
-        <div class="content">
-            <h1>Find Tech</h1>
-            <div class="sub-container">
-                <div class="item"></div>
-                <div class="item"></div>
-                <div class="item"></div>
-            </div>
+    <div class="sidebar">
+        <select id="filter1" class="filter">
+            <option value="">Select Filter 1</option>
+        </select>
+        <select id="filter2" class="filter">
+            <option value="">Select Filter 2</option>
+        </select>
+        <div id="filter3"></div>
+        <p>Price: <span id="price-lower"></span> - <span id="price-upper"></span></p>
+        <button id="postButton">Send POST request</button>
+    </div>
+    <div class="content">
+        <h1>Find Tech</h1>
+        <div class="sub-container">
+    
         </div>
     </div>
-</body>
-<script>
+    <script>
+    window.onload = function() {
+        const filter3 = document.getElementById('filter3');
+        const priceLower = document.getElementById('price-lower');
+        const priceUpper = document.getElementById('price-upper');
 
-</script>
+        noUiSlider.create(filter3, {
+            start: [20, 80],
+            connect: true,
+            range: {
+                'min': 0,
+                'max': 100
+            }
+        });
+
+        filter3.noUiSlider.on('update', function(values, handle) {
+            if (handle) {
+                priceUpper.textContent = values[handle];
+            } else {
+                priceLower.textContent = values[handle];
+            }
+        });
+        sendPostRequest();
+
+    }
+    fetch('/api/techs')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        const filter1 = document.getElementById('filter1');
+        data.data.specialities.forEach(speciality => {
+            const option = document.createElement('option');
+            option.value = speciality.id_spec;
+            option.text = speciality.name;
+            filter1.appendChild(option);
+        });
+
+        const filter2 = document.getElementById('filter2');
+        data.data.services.forEach(service => {
+            const option = document.createElement('option');
+            option.value = service.id_serv;
+            option.text = service.name;
+            filter2.appendChild(option);
+        });
+    })
+    .catch(error => {
+        console.error('There has been a problem with your fetch operation:', error);
+    });
+
+    let isFirstCall = true;
+
+    const postButton = document.getElementById('postButton');
+    postButton.addEventListener('click', sendPostRequest);
+
+    function sendPostRequest() {
+    const filters = Array.from(document.querySelectorAll('.filter')).map(filter => filter.value);
+    const priceRange = filter3.noUiSlider.get();
+
+    const called = isFirstCall ? 0 : 1;
+    isFirstCall = false;
+
+    fetch('/api/techs', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ filters, priceRange, called }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        const subContainer = document.querySelector('.sub-container');
+        subContainer.innerHTML = '';
+
+        data.data.forEach(entry => {
+            const item = document.createElement('div');
+            item.classList.add('item');
+
+            item.id = `item-${entry.id_tech}`;
+
+            const name = document.createElement('p');
+            name.textContent = `${entry.name} ${entry.surname}`;
+            item.appendChild(name);
+
+            const years = document.createElement('p');
+            years.textContent = `${entry.experience_years} years`;
+            item.appendChild(years);
+
+            item.addEventListener('click', () => {
+                console.log(`You clicked on item with id: ${item.id}`);
+            });
+
+            subContainer.appendChild(item);
+        });
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+    </script>
+</body>
 </html>

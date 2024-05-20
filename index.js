@@ -152,8 +152,18 @@ class Service {
     this.specialty_id = Specialty_id;
     this.price = Price;
   }
-
-  // Add methods as needed
+  static async getAllServices() {
+    const sql = "CALL getAllServices()";
+    try {
+      const results = await db.query(sql);
+      const services = results[0].map(row => new Service(row.id_serv, row.name, row.descr, row.specialty_id, row.price));
+      return services;
+    } catch (err) {
+      console.error("Error fetching services:", err);
+      return null;
+    }
+  }
+  
 }
 
 
@@ -182,11 +192,11 @@ class Tech extends Account {
     }
   }
 
-  static async getTechs() {
+  static async getAllTechs() {
     const sql = "CALL getAllTechs()";
     try {
       const results = await db.query(sql);
-      const techs = results[0].map(row => new Tech(row.username, row.password, row.name, row.surname, row.address, row.phone_number, row.email, row.date, row.specialty, row.experience_years));
+      const techs = results[0].map(row => new Tech(row.id_tech, row.username, row.password, row.name, row.surname, row.address, row.phone_number, row.email, row.date, row.specialty, row.experience_years));
       return techs;
     } catch (err) {
       console.error("Error fetching techs:", err);
@@ -206,21 +216,28 @@ class Admin extends Account {
 
 
 
-class Review {
-  constructor(Id_sub, Sub_cost, Sub_name, Sub_plan, Sub_start_date, Sub_end_date, Sub_status, Id_tech) {
-    this.id_sub = Id_sub;
-    this.sub_cost = Sub_cost;
-    this.sub_name = Sub_name;
-    this.sub_plan = Sub_plan;
-    this.sub_start_date = Sub_start_date;
-    this.sub_end_date = Sub_end_date;
-    this.sub_status = Sub_status;
-    this.id_tech = Id_tech;
+  class Review {
+    constructor(ReviewID, ReviewText, ReviewUserUsername, ReviewTechUsername, ReviewDate, ReviewScore) {
+      this.reviewID = ReviewID;
+      this.reviewText = ReviewText;
+      this.reviewUserUsername = ReviewUserUsername;
+      this.reviewTechUsername = ReviewTechUsername;
+      this.reviewDate = ReviewDate;
+      this.reviewscore = ReviewScore;
+    }
+  
+    static async getReviewsAverageByTech(techUsername) {
+      const sql = "CALL calculateAverageReview(?)";
+      try {
+        const results = await db.query(sql, [techUsername]);
+        return results[0][0];
+      } catch (err) {
+        console.error("Error fetching reviews average:", err);
+        return null;
+      }
+    }
   }
-
-  // Add methods as needed
-}
-
+  
 
 
 
@@ -230,7 +247,17 @@ class Specialty {
     this.name = Name;
   }
 
-  // Add methods as needed
+  static async getAllSpecialties() {
+    const sql = "CALL getAllSpecialties()";
+    try {
+      const results = await db.query(sql);
+      const specialties = results[0].map(row => new Specialty(row.id_spec, row.name));
+      return specialties;
+    } catch (err) {
+      console.error("Error fetching specialties:", err);
+      return null;
+    }
+  }
 }
 
 
@@ -243,8 +270,9 @@ function isAuthenticated(req, res, next) {
       // User is authenticated, proceed to the next middleware or route handler
       return next();
     } else {
+      res.redirect('/');
       // User is not authenticated, redirect them to the login page or send an authentication error
-      res.status(401).send('Unauthorized. Please log in.');
+      //res.status(401).send('Unauthorized. Please log in.');
     }
   }
 
@@ -456,13 +484,27 @@ app.get('/find_tech', isAuthenticated, isUser, isLogged, (req, res) => {
 });
 
 app.get('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
-  try {
-    const techs = await Tech.getTechs();
-    console.log("test 1");
-    res.json({ data: techs });
+  try{
+    const specialities = await Specialty.getAllSpecialties();
+    const services = await Service.getAllServices();
+    res.json({ data: { specialities, services } });
   } catch (err) {
-    console.error('Error fetching techs:', err);
+    console.error('Error fetching specialities and services:', err);
     res.status(500).send('Error occurred');
+    }
+});
+
+app.post('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
+  if(req.body.called){
+    console.log("called");
+  }else {
+    try {
+      const techs = await Tech.getAllTechs();
+      res.json({ data: techs });
+    } catch (err) {
+      console.error('Error fetching techs:', err);
+      res.status(500).send('Error occurred');
+    }
   }
 });
 
@@ -480,6 +522,8 @@ app.get('/api/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
     res.status(500).send("Error occurred");
   }
 });
+
+
   
 // ===============================================================================================================
 
