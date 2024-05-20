@@ -6,72 +6,118 @@
   <title>Booking History</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <style>
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+    body {
+  font-family: sans-serif;
+  margin: 0; /* Remove padding */
+}
 
-    th, td {
-      text-align: left;
-      padding: 8px;
-      border: 1px solid #ddd;
-    }
-  </style>
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+#get-bookings {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.booking-container {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  background-color: rgb(240, 240, 240); /* Light gray background for container */
+}
+
+.card {
+  width: 190px;
+  height: 254px;
+  border-radius: 20px;
+  padding: 5px;
+  box-shadow: rgba(151, 65, 252, 0.2) 0 15px 30px -5px;
+  background-image: linear-gradient(144deg, #AF40FF, #5B42F3 50%, #00DDEB);
+}
+
+.card__content {
+  background: rgb(5, 6, 45); /* Text color for card content */
+  border-radius: 17px;
+  width: 100%;
+  height: 100%;
+  padding: 15px;
+  color: white;
+}
+</style>
 </head>
 <body>
   <h1>Booking History</h1>
-  <button id="get-bookings">Get Bookings</button>
-  <div id="booking-history"></div>
+  <div id="booking-history">
+    <div class="card"></div> </div>
 
   <script>
     $(document).ready(function () {
-      $("#get-bookings").click(async function () {
-        try {
-          const response = await $.ajax({
-            url: "/api/booking",
-            method: "GET",
-          });
+      fetchBookings();
+    });
 
-          let data = response.data;
+    function fetchBookings() {
+      try {
+        $.ajax({
+          url: "/api/booking",
+          method: "GET",
+          success: function (response) {
+            let data = response.data;
+            let html = "";
 
-          let html;
-          if (data.length > 0) {
-            html = `<table>
-              <thead>
-                <tr>
-                  <th>Reservation ID</th>
-                  <th>Service</th>
-                  <th>Specialty</th>
-                  <th>Technician</th>
-                  <th>Date</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>`;
+            if (data.length > 0) {
+              for (const booking of data) {
+                html += `<div class="booking-container">`;
+                html += `  <div class="card">`;
+                html += `    <div class="card__content">`;
 
-            for (const booking of data) {
-              html += `<tr>
-                <td>${booking.ResID}</td>
-                <td>${booking.service_name}</td>
-                <td>${booking.specialty_name}</td>
-                <td>${booking.name} ${booking.surname}</td>
-                <td>${new Date(booking.ResDate).toLocaleDateString()}</td>
-                <td>${booking.ResTime}</td>
-              </tr>`;
+                html += `      <h3>Booking ID: ${booking.ResID}</h3>`;
+
+                let statusColor = "";
+                switch (booking.ResStatus) {
+                  case "Pending":
+                    statusColor = "status-pending";
+                    break;
+                  case "Done":
+                    statusColor = "status-done";
+                    break;
+                  case "Cancelled":
+                    statusColor = "status-cancelled";
+                    break;
+                }
+                html += `      <p>Status: <span class="${statusColor}">${booking.ResStatus}</span></p>`;
+                html += `      <p>Service: ${booking.service_name}</p>`;
+                html += `      <p>Specialty: ${booking.specialty_name}</p>`;
+                html += `      <p>Technician: ${booking.name} ${booking.surname}</p>`;
+                html += `      <p>Date: ${new Date(booking.ResDate).toLocaleDateString()}</p>`;
+                html += `      <p>Time: ${booking.ResTime}</p>`;
+
+                html += `    </div>`;
+                html += `  </div>`;
+                html += `</div>`;
+              }
+            } else {
+              html = "<p>No booking history found.</p>";
             }
 
-            html += `</tbody>
-            </table>`;
-          } else {
-            html = "<p>No booking history found.</p>";
+            $("#booking-history").html(html);
+          },
+          error: function (error) {
+            console.error("An error occurred:", error);
           }
-
-          $("#booking-history").html(html);
-        } catch (error) {
-          console.error("An error occurred:", error);
-        }
-      });
-    });
+        });
+      } catch (error) {
+        console.error("An error occurred:", error);
+      }
+    }
   </script>
 </body>
 </html>
