@@ -16,6 +16,7 @@ const database = new Database();
 database.connect();
 const db = database.connection;
 
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -39,7 +40,6 @@ class Account {
     this.date = date;
   }
 
-  // Add methods as needed
 }
 
 
@@ -92,15 +92,19 @@ class User extends Account {
     super(username, password, name, surname, address, phone_number, email, date);
     this.id_us = id_us; // Additional property specific to User
   }
-
-  async getBookingHistory() {
-    const sql = "CALL getBookingHistory(?)";
-    const usern = this.username;
+  static async createUser(username) {
+    const sql = "CALL getUserByUsername(?)";
     try {
-      const results = await db.query(sql, [usern]);
-      return results[0];
+      const results = await db.query(sql, [username]);
+      if (results && results.length > 0) {
+        const test = results[0][0];
+        return new User(test.id_us, test.username, test.password, test.name, test.surname, test.address, test.phone_number, test.email, test.date);
+      } else {
+        console.error("No user found with this username:", username);
+        return null;
+      }
     } catch (err) {
-      console.error("Error fetching booking history:", err);
+      console.error("Error creating user:", err);
       return null;
     }
   }
@@ -109,16 +113,28 @@ class User extends Account {
 
 
 class Reservations {
-constructor(ResID, ResUserUsername, ResTechUsername, ResSpecialty, ResService, ResStatus, ResDate, ResTime) {
-  this.resId = ResID;
-  this.resUserUsername = ResUserUsername;
-  this.resTechUsername = ResTechUsername;
-  this.ResSpecialty = ResSpecialty;
-  this.resService = ResService;
-  this.resStatus = ResStatus;
-  this.resDate = ResDate;
-  this.resTime = ResTime;
-}
+  constructor(ResID, ResUserUsername, ResTechUsername, ResSpecialty, ResService, ResStatus, ResDate, ResTime) {
+    this.resId = ResID;
+    this.resUserUsername = ResUserUsername;
+    this.resTechUsername = ResTechUsername;
+    this.ResSpecialty = ResSpecialty;
+    this.resService = ResService;
+    this.resStatus = ResStatus;
+    this.resDate = ResDate;
+    this.resTime = ResTime;
+  }
+  static async getBookingHistory(username) {
+    const sql = "CALL getBookingHistory(?)";
+    const usern = username;
+    try {
+      const results = await db.query(sql, [usern]);
+      return results[0];
+    } catch (err) {
+      console.error("Error fetching booking history:", err);
+      return null;
+    }
+  }
+
 }
 
 
@@ -149,7 +165,34 @@ class Tech extends Account {
     this.specialty = specialty;
     this.experience_years = experience_years;
   }
+  static async createTech(username) {
+    const sql = "CALL getTechByUsername(?)";
+    try {
+      const results = await db.query(sql, [username]);
+      if (results && results.length > 0) {
+        const test = results[0][0];
+        return new Tech(test.id_tech, test.username, test.password, test.name, test.surname, test.address, test.phone_number, test.email, test.date, test.specialty, test.experience_years);
+      } else {
+        console.error("No tech found with this username:", username);
+        return null;
+      }
+    } catch (err) {
+      console.error("Error creating tech:", err);
+      return null;
+    }
+  }
 
+  static async getTechs() {
+    const sql = "CALL getAllTechs()";
+    try {
+      const results = await db.query(sql);
+      const techs = results[0].map(row => new Tech(row.username, row.password, row.name, row.surname, row.address, row.phone_number, row.email, row.date, row.specialty, row.experience_years));
+      return techs;
+    } catch (err) {
+      console.error("Error fetching techs:", err);
+      return null;
+    }
+  }
 }
 
 class Admin extends Account {
@@ -299,7 +342,9 @@ function isAuthenticated(req, res, next) {
     });
 
   }
-
+  let user = new User();
+  let tech = new Tech();
+  let admin = new Admin();
 
 // ==================================================== Routes ===========================================================
 
@@ -385,6 +430,7 @@ app.post('/signup', async (req, res) => {
 app.get('/user', isAuthenticated, isUser, isLogged, (req, res) => {
   
   res.sendFile(__dirname + '/main_page.html');
+  user = User.createUser(req.session.userId);
 });
 app.get('/',isAuthenticated,isUser,isLogged,(req,res)=>{
   res.sendFile(__dirname + '/main_page.html');
@@ -409,16 +455,25 @@ app.get('/find_tech', isAuthenticated, isUser, isLogged, (req, res) => {
   res.sendFile(__dirname + '/find_tech.html');
 });
 
-app.get("/booking", (req, res) => {
+app.get('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
+  try {
+    const techs = await Tech.getTechs();
+    console.log("test 1");
+    res.json({ data: techs });
+  } catch (err) {
+    console.error('Error fetching techs:', err);
+    res.status(500).send('Error occurred');
+  }
+});
+
+app.get('/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
   res.sendFile(__dirname + '/booking.html');
 });
 
 app.get('/api/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
   try {
-    const user = new User();
-    user.username = req.session.userId;
-    const bookings = await user.getBookingHistory();
-    console.log(bookings);
+    let user = await User.createUser(req.session.userId); // Wait for the Promise to resolve
+    const bookings = await Reservations.getBookingHistory(user.username);
     res.json({ data: bookings });
   } catch (err) {
     console.error("Error fetching booking history:", err);
