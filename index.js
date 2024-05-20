@@ -145,18 +145,17 @@ class Reservations {
 
 
 class Service {
-  constructor(Id_serv, Name, Descr, Specialty_id, Price) {
+  constructor(Id_serv, Name, Descr, Specialty_id, ) {
     this.id_serv = Id_serv;
     this.name = Name;
     this.descr = Descr;
     this.specialty_id = Specialty_id;
-    this.price = Price;
   }
   static async getAllServices() {
     const sql = "CALL getAllServices()";
     try {
       const results = await db.query(sql);
-      const services = results[0].map(row => new Service(row.id_serv, row.name, row.descr, row.specialty_id, row.price));
+      const services = results[0].map(row => new Service(row.id_serv, row.name, row.descr, row.specialty_id));
       return services;
     } catch (err) {
       console.error("Error fetching services:", err);
@@ -169,11 +168,12 @@ class Service {
 
 
 class Tech extends Account {
-  constructor(id_tech,username, password, name, surname, address, phone_number, email, date, specialty, experience_years) {
+  constructor(id_tech,username, password, name, surname, address, phone_number, email, date, specialty, experience_years, LaborCost) {
     super(username, password, name, surname, address, phone_number, email, date);
     this.id_tech = id_tech; 
     this.specialty = specialty;
     this.experience_years = experience_years;
+    this.LaborCost = LaborCost;
   }
   static async createTech(username) {
     const sql = "CALL getTechByUsername(?)";
@@ -181,7 +181,7 @@ class Tech extends Account {
       const results = await db.query(sql, [username]);
       if (results && results.length > 0) {
         const test = results[0][0];
-        return new Tech(test.id_tech, test.username, test.password, test.name, test.surname, test.address, test.phone_number, test.email, test.date, test.specialty, test.experience_years);
+        return new Tech(test.id_tech, test.username, test.password, test.name, test.surname, test.address, test.phone_number, test.email, test.date, test.specialty, test.experience_years, test.LaborCost);
       } else {
         console.error("No tech found with this username:", username);
         return null;
@@ -202,6 +202,9 @@ class Tech extends Account {
       console.error("Error fetching techs:", err);
       return null;
     }
+  }
+  static async filterTechs(specialty, service,rating,price) {  
+
   }
 }
 
@@ -370,9 +373,23 @@ function isAuthenticated(req, res, next) {
     });
 
   }
-  let user = new User();
-  let tech = new Tech();
-  let admin = new Admin();
+  var user = new User();
+  async function populateUser(req, res, next) {
+    const userId = req.session.userId; // Get the user ID from the session
+    user = await User.createUser(userId);
+    next();
+  }    
+
+  
+ 
+  var tech = new Tech();
+  async function populateTech(req, res, next) {
+    const userId = req.session.userId; // Get the user ID from the session
+    tech = await Tech.createTech(userId);
+    next();
+  }
+
+  var admin = new Admin();
 
 // ==================================================== Routes ===========================================================
 
@@ -455,16 +472,15 @@ app.post('/signup', async (req, res) => {
 });
 
 
-app.get('/user', isAuthenticated, isUser, isLogged, (req, res) => {
+app.get('/user', isAuthenticated, isUser, isLogged,populateUser, (req, res) => {
   
   res.sendFile(__dirname + '/main_page.html');
-  user = User.createUser(req.session.userId);
 });
 app.get('/',isAuthenticated,isUser,isLogged,(req,res)=>{
   res.sendFile(__dirname + '/main_page.html');
 });
 
-app.get('/tech', isAuthenticated, isTech, isLogged, (req, res) => {
+app.get('/tech', isAuthenticated, isTech, isLogged, populateTech, (req, res) => {
   
   res.send('Welcome tech!');
 });
@@ -493,13 +509,17 @@ app.get('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
     res.status(500).send('Error occurred');
     }
 });
-
+//we cash the techs to avoid multiple queries
+let cachedTechs = null;
 app.post('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
   if(req.body.called){
     console.log("called");
+    //here we do the filtering and return the techs
+    res.json({ data: [] });
   }else {
     try {
       const techs = await Tech.getAllTechs();
+      cachedTechs = techs;
       res.json({ data: techs });
     } catch (err) {
       console.error('Error fetching techs:', err);
@@ -514,7 +534,6 @@ app.get('/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
 
 app.get('/api/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
   try {
-    let user = await User.createUser(req.session.userId); // Wait for the Promise to resolve
     const bookings = await Reservations.getBookingHistory(user.username);
     res.json({ data: bookings });
   } catch (err) {
