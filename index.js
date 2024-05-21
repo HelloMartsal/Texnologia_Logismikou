@@ -320,6 +320,10 @@ app.get('/api/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
   }
 });
 
+app.get('/calendar', isAuthenticated, isUser, isLogged, async (req, res) => {
+  res.sendFile(__dirname + '/calendar.html');
+});
+
 
   
 // ===============================================================================================================
