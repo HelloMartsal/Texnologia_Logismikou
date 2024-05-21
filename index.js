@@ -254,13 +254,10 @@ app.get('/user', isAuthenticated, isUser, isLogged,populateUser, (req, res) => {
   
   res.sendFile(__dirname + '/main_page.html');
 });
-app.get('/',isAuthenticated,isUser,isLogged,(req,res)=>{
-  res.sendFile(__dirname + '/main_page.html');
-});
 
 app.get('/tech', isAuthenticated, isTech, isLogged, populateTech, (req, res) => {
   
-  res.send('Welcome tech!');
+  res.sendFile(__dirname + '/main_page.html');
 });
 
 app.get('/admin', isAuthenticated, isAdmin, isLogged, (req, res) => {
@@ -320,11 +317,28 @@ app.get('/api/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
   }
 });
 
-app.get('/calendar', isAuthenticated, isUser, isLogged, async (req, res) => {
+app.get('/calendar', isAuthenticated, isTech, isLogged, async (req, res) => {
   res.sendFile(__dirname + '/calendar.html');
 });
 
-
+app.get('/api/calendar', isAuthenticated, isTech, isLogged, async (req, res) => {
+  try {
+    const availabity =await tech.getAvailabity(db);
+    res.json({ data: availabity });
+  } catch (err) {
+    console.error("Error fetching calendar:", err);
+    res.status(500).send("Error occurred");
+  }
+});
+app.post('/api/calendar', isAuthenticated, isTech, isLogged, async (req, res) => {
+  const events = req.body;
+  try {
+    await tech.setAvailability(db, events);
+  } catch (err) {
+    console.error("Error setting availability:", err);
+    res.status(500).send("Error occurred");
+  }
+});
   
 // ===============================================================================================================
 
