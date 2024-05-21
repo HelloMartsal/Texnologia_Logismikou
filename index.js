@@ -11,9 +11,9 @@ import Service from "./Classes/service.js";
 import Review from "./Classes/review.js";
 import User from "./Classes/user.js";
 import Admin from "./Classes/admin.js";
-import Reservations from "./Classes/reservations.js";
-import Notifications from "./Classes/notifications.js";
-import Offers from "./Classes/offers.js";
+import Reservations from "./Classes/reservation.js";
+import Notifications from "./Classes/notification.js";
+import Offers from "./Classes/offer.js";
 import Payment from "./Classes/payment.js";
 import Account from "./Classes/account.js";
 
