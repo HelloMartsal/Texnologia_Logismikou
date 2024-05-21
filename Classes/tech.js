@@ -41,6 +41,28 @@ class Tech extends Account {
     static async filterTechs(db, specialty, service,rating,price) {  
       // Implementation here
     }
+
+    async getAvailabity(db) {
+      const sql = "CALL getAvailability(?)";
+      try {
+        const results = await db.query(sql, [this.username]);
+        const events = JSON.parse(results[0][0].availability);
+        return events;
+      } catch (err) {
+        console.error("Error fetching availability:", err);
+        return null;
+      }
+    }
+    async setAvailability(db, availability) {
+      const sql = "CALL setAvailability(?, ?)";
+      try {
+        const results = await db.query(sql, [this.username, JSON.stringify(availability)]);
+      } catch (err) {
+        console.error("Error setting availability:", err);
+        return false;
+      }
+    }
   }
+
   
   export default Tech;
