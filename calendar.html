@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Calendar</title>
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/main.min.css' rel='stylesheet' />
+    <!-- FullCalendar JavaScript -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/main.min.js'></script>
+    <!-- Optional: FullCalendar locales for different languages -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/locales-all.min.js'></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #calendar {
+            width: 90%;
+            height: 90%;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+<button id="exportEvents">Export Events</button>
+
+<div id='calendar'></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        headerToolbar: false, // Remove the header toolbar
+        allDaySlot: false,
+        weekNumbers: false,
+        dayHeaderFormat: { weekday: 'short' },
+        events: [
+            {
+                title: 'Event 1',
+                daysOfWeek: [ 1 ], // Monday
+                startTime: '10:00:00',
+                endTime: '12:00:00'
+            },
+            {
+                title: 'Event 2',
+                daysOfWeek: [ 2 ], // Tuesday
+                startTime: '14:00:00',
+                endTime: '16:00:00'
+            }
+        ],
+        editable: true, // Enable drag and drop
+
+        dateClick: function(info) {
+            var title = prompt('Event Title:');
+            if (!title) {
+                return; // Exit if no title is provided
+            }
+
+            var daysOfWeek = prompt('Days of the week (0-6, 0=Sunday, separate multiple days with commas):');
+            if (!daysOfWeek) {
+                return; // Exit if no days of the week are provided
+            }
+            daysOfWeek = daysOfWeek.split(',').map(Number); // Convert to array of numbers
+
+            var startTime = prompt('Start Time (HH:mm, 24hr format):');
+            var endTime = prompt('End Time (HH:mm, 24hr format):');
+            if (!startTime || !endTime) {
+                return; // Exit if start or end time is not provided
+            }
+
+            // Check for overlapping events
+            var events = calendar.getEvents();
+            for (var i = 0; i < events.length; i++) {
+                var event = events[i];
+                var eventDays = event._def.recurringDef.typeData.daysOfWeek;
+                var eventStart = event.start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                var eventEnd = event.end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+                // Check if the new event overlaps with an existing event on the same day
+                for (var j = 0; j < daysOfWeek.length; j++) {
+                    if (eventDays.includes(daysOfWeek[j])) {
+                        if (!(endTime <= eventStart || startTime >= eventEnd)) {
+                            alert('Error: Event overlaps with an existing event.');
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // Add the new event if no overlap is found
+            calendar.addEvent({
+                title: title,
+                daysOfWeek: daysOfWeek,
+                startTime: startTime,
+                endTime: endTime
+            });
+        }
+    });
+
+    calendar.render();
+
+    // Add event listener to export button
+    document.getElementById('exportEvents').addEventListener('click', function() {
+        var events = calendar.getEvents().map(function(event) {
+            return {
+                title: event.title,
+                daysOfWeek: event._def.recurringDef.typeData.daysOfWeek,
+                startTime: event.start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }),
+                endTime: event.end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
+            };
+        });
+        console.log(JSON.stringify(events));
+    });
+});
+</script>
+
+</body>
+</html>
