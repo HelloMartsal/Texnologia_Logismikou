@@ -5,6 +5,18 @@ import { fileURLToPath } from 'url';
 import session from "express-session";
 import bodyParser from'body-parser';
 import Database from "./Classes/database.js";
+import Tech from "./Classes/tech.js";
+import Specialty from "./Classes/specialty.js";
+import Service from "./Classes/service.js";
+import Review from "./Classes/review.js";
+import User from "./Classes/user.js";
+import Admin from "./Classes/admin.js";
+import Reservations from "./Classes/reservations.js";
+import Notifications from "./Classes/notifications.js";
+import Offers from "./Classes/offers.js";
+import Payment from "./Classes/payment.js";
+import Account from "./Classes/account.js";
+
 
 
 
@@ -27,241 +39,7 @@ app.use(
     saveUninitialized: false,
   })
 );
-// ==================================================== Classes ==============================================================
-class Account {
-  constructor(username, password, name, surname, address,phone_number, email, date) {
-    this.username = username;
-    this.password = password;
-    this.name = name;
-    this.surname = surname;
-    this.address = address;
-    this.phone_number = phone_number;
-    this.email = email;
-    this.date = date;
-  }
 
-}
-
-
-class Offers {
-  constructor(Id_offer, Off_type, Off_desc, Off_start_date, Off_end_date, Off_price) {
-    this.id_offer = Id_offer;
-    this.off_type = Off_type;
-    this.off_desc = Off_desc;
-    this.off_start_date = Off_start_date;
-    this.off_end_date = Off_end_date;
-    this.off_price = Off_price;
-  }
-}
-
-
-class Notifications {
-  constructor(NotificationID, NotificationText, NotificationSender, NotificationReceiver, NotificationDate) {
-    this.notificationId = NotificationIDID;
-    this.notificationText = NotificationText;
-    this.notificationSender = NotificationSender;
-    this.notificationReceiver = NotificationReceiver;
-    this.notificationDate = NotificationDate;
-  }
-}
-
-
-
-
-
-
-class Payment {
-  constructor(PaymentID, PaymentAmount, PaymentUserUsername, PaymentTechUsername, PaymentMethod, PaymentDate, PaymentTime) {
-    this.paymentIDaymentID = PaymentID;
-    this.paymentAmount = PaymentAmount;
-    this.paymentUserUsername = PaymentUserUsername;
-    this.paymentTechUsername = PaymentTechUsername;
-    this.paymentMethod = PaymentMethod;
-    this.paymentDate = PaymentDate;
-    this.paymentTime = PaymentTime;
-  }
-
-  // Add methods as needed
-}
-
-
-
-
-class User extends Account {
-  constructor(id_us, username, password, name, surname, address, phone_number, email, date) {
-    super(username, password, name, surname, address, phone_number, email, date);
-    this.id_us = id_us; // Additional property specific to User
-  }
-  static async createUser(username) {
-    const sql = "CALL getUserByUsername(?)";
-    try {
-      const results = await db.query(sql, [username]);
-      if (results && results.length > 0) {
-        const test = results[0][0];
-        return new User(test.id_us, test.username, test.password, test.name, test.surname, test.address, test.phone_number, test.email, test.date);
-      } else {
-        console.error("No user found with this username:", username);
-        return null;
-      }
-    } catch (err) {
-      console.error("Error creating user:", err);
-      return null;
-    }
-  }
-}
-
-
-
-class Reservations {
-  constructor(ResID, ResUserUsername, ResTechUsername, ResSpecialty, ResService, ResStatus, ResDate, ResTime) {
-    this.resId = ResID;
-    this.resUserUsername = ResUserUsername;
-    this.resTechUsername = ResTechUsername;
-    this.ResSpecialty = ResSpecialty;
-    this.resService = ResService;
-    this.resStatus = ResStatus;
-    this.resDate = ResDate;
-    this.resTime = ResTime;
-  }
-  static async getBookingHistory(username) {
-    const sql = "CALL getBookingHistory(?)";
-    const usern = username;
-    try {
-      const results = await db.query(sql, [usern]);
-      return results[0];
-    } catch (err) {
-      console.error("Error fetching booking history:", err);
-      return null;
-    }
-  }
-
-}
-
-
-
-
-
-
-
-
-class Service {
-  constructor(Id_serv, Name, Descr, Specialty_id, ) {
-    this.id_serv = Id_serv;
-    this.name = Name;
-    this.descr = Descr;
-    this.specialty_id = Specialty_id;
-  }
-  static async getAllServices() {
-    const sql = "CALL getAllServices()";
-    try {
-      const results = await db.query(sql);
-      const services = results[0].map(row => new Service(row.id_serv, row.name, row.descr, row.specialty_id));
-      return services;
-    } catch (err) {
-      console.error("Error fetching services:", err);
-      return null;
-    }
-  }
-  
-}
-
-
-
-class Tech extends Account {
-  constructor(id_tech,username, password, name, surname, address, phone_number, email, date, specialty, experience_years, LaborCost) {
-    super(username, password, name, surname, address, phone_number, email, date);
-    this.id_tech = id_tech; 
-    this.specialty = specialty;
-    this.experience_years = experience_years;
-    this.LaborCost = LaborCost;
-  }
-  static async createTech(username) {
-    const sql = "CALL getTechByUsername(?)";
-    try {
-      const results = await db.query(sql, [username]);
-      if (results && results.length > 0) {
-        const test = results[0][0];
-        return new Tech(test.id_tech, test.username, test.password, test.name, test.surname, test.address, test.phone_number, test.email, test.date, test.specialty, test.experience_years, test.LaborCost);
-      } else {
-        console.error("No tech found with this username:", username);
-        return null;
-      }
-    } catch (err) {
-      console.error("Error creating tech:", err);
-      return null;
-    }
-  }
-
-  static async getAllTechs() {
-    const sql = "CALL getAllTechs()";
-    try {
-      const results = await db.query(sql);
-      const techs = results[0].map(row => new Tech(row.id_tech, row.username, row.password, row.name, row.surname, row.address, row.phone_number, row.email, row.date, row.specialty, row.experience_years));
-      return techs;
-    } catch (err) {
-      console.error("Error fetching techs:", err);
-      return null;
-    }
-  }
-  static async filterTechs(specialty, service,rating,price) {  
-
-  }
-}
-
-class Admin extends Account {
-  constructor(id_ad,username, password, name, surname, address, phone_number, email, date) {
-    super(username, password, name, surname, address, phone_number, email, date);
-    this.id_ad = id_ad; 
-  }
-}
-  // Add methods as needed
-
-
-
-
-  class Review {
-    constructor(ReviewID, ReviewText, ReviewUserUsername, ReviewTechUsername, ReviewDate, ReviewScore) {
-      this.reviewID = ReviewID;
-      this.reviewText = ReviewText;
-      this.reviewUserUsername = ReviewUserUsername;
-      this.reviewTechUsername = ReviewTechUsername;
-      this.reviewDate = ReviewDate;
-      this.reviewscore = ReviewScore;
-    }
-  
-    static async getReviewsAverageByTech(techUsername) {
-      const sql = "CALL calculateAverageReview(?)";
-      try {
-        const results = await db.query(sql, [techUsername]);
-        return results[0][0];
-      } catch (err) {
-        console.error("Error fetching reviews average:", err);
-        return null;
-      }
-    }
-  }
-  
-
-
-
-class Specialty {
-  constructor(Id_spec, Name) {
-    this.id_spec = Id_spec;
-    this.name = Name;
-  }
-
-  static async getAllSpecialties() {
-    const sql = "CALL getAllSpecialties()";
-    try {
-      const results = await db.query(sql);
-      const specialties = results[0].map(row => new Specialty(row.id_spec, row.name));
-      return specialties;
-    } catch (err) {
-      console.error("Error fetching specialties:", err);
-      return null;
-    }
-  }
-}
 
 
 // ==================================================== Middleware ===========================================================
@@ -376,7 +154,7 @@ function isAuthenticated(req, res, next) {
   var user = new User();
   async function populateUser(req, res, next) {
     const userId = req.session.userId; // Get the user ID from the session
-    user = await User.createUser(userId);
+    user = await User.createUser(db,userId);
     next();
   }    
 
@@ -385,7 +163,7 @@ function isAuthenticated(req, res, next) {
   var tech = new Tech();
   async function populateTech(req, res, next) {
     const userId = req.session.userId; // Get the user ID from the session
-    tech = await Tech.createTech(userId);
+    tech = await Tech.createTech(db,userId);
     next();
   }
 
@@ -498,11 +276,11 @@ app.get('/logout', isAuthenticated, isLogged, (req, res) => {
 app.get('/find_tech', isAuthenticated, isUser, isLogged, (req, res) => {
   res.sendFile(__dirname + '/find_tech.html');
 });
-
+//find a middleware to stop access
 app.get('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
   try{
-    const specialities = await Specialty.getAllSpecialties();
-    const services = await Service.getAllServices();
+    const specialities = await Specialty.getAllSpecialties(db);
+    const services = await Service.getAllServices(db);
     res.json({ data: { specialities, services } });
   } catch (err) {
     console.error('Error fetching specialities and services:', err);
@@ -513,12 +291,12 @@ app.get('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
 let cachedTechs = null;
 app.post('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
   if(req.body.called){
-    console.log("called");
+    //console.log("called");
     //here we do the filtering and return the techs
-    res.json({ data: [] });
+
   }else {
     try {
-      const techs = await Tech.getAllTechs();
+      const techs = await Tech.getAllTechs(db);
       cachedTechs = techs;
       res.json({ data: techs });
     } catch (err) {
