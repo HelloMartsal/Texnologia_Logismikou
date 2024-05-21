@@ -1,19 +1,13 @@
 import Account from './account.js';
 // tech.js
 class Tech extends Account {
-    constructor(id_tech, username, password, name, surname, address, phone_number, email, date, specialty, experience_years) {
-      this.id_tech = id_tech;
-      this.username = username;
-      this.password = password;
-      this.name = name;
-      this.surname = surname;
-      this.address = address;
-      this.phone_number = phone_number;
-      this.email = email;
-      this.date = date;
-      this.specialty = specialty;
-      this.experience_years = experience_years;
-    }
+  constructor(id_tech,username, password, name, surname, address, phone_number, email, date, specialty, experience_years, LaborCost) {
+    super(username, password, name, surname, address, phone_number, email, date);
+    this.id_tech = id_tech; 
+    this.specialty = specialty;
+    this.experience_years = experience_years;
+    this.LaborCost = LaborCost;
+  }
   
     static async createTech(db,username) {
         const sql = "CALL getTechByUsername(?)";
