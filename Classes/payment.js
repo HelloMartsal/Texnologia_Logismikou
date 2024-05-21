@@ -1,12 +1,15 @@
 class Payment {
-    constructor(PaymentID, PaymentUserUsername, PaymentTechUsername, PaymentAmount, PaymentDate) {
-      this.paymentID = PaymentID;
-      this.paymentUserUsername = PaymentUserUsername;
-      this.paymentTechUsername = PaymentTechUsername;
-      this.paymentAmount = PaymentAmount;
-      this.paymentDate = PaymentDate;
-    }
-
+  constructor(PaymentID, PaymentAmount, PaymentUserUsername, PaymentTechUsername, PaymentMethod, PaymentDate, PaymentTime) {
+    this.paymentIDaymentID = PaymentID;
+    this.paymentAmount = PaymentAmount;
+    this.paymentUserUsername = PaymentUserUsername;
+    this.paymentTechUsername = PaymentTechUsername;
+    this.paymentMethod = PaymentMethod;
+    this.paymentDate = PaymentDate;
+    this.paymentTime = PaymentTime;
   }
+
+  // Add methods as needed
+}
   
   export default Payment;

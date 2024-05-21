@@ -312,7 +312,7 @@ app.get('/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
 
 app.get('/api/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
   try {
-    const bookings = await Reservations.getBookingHistory(user.username);
+    const bookings = await Reservations.getBookingHistory(db,user.username);
     res.json({ data: bookings });
   } catch (err) {
     console.error("Error fetching booking history:", err);
