@@ -12,29 +12,45 @@
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/locales-all.min.js'></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f0f0f0;
+            background-color: #f9f9f9;
         }
-        #calendar {
-            width: 90%;
-            height: 90%;
-            background-color: #fff;
+        #calendar-container {
+            width: 60%;
+            margin: auto;
             padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        #exportEvents {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #exportEvents:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
-<button id="logEvents">Log Events</button>
-<button id="exportEvents">Export Events</button>
 
-<div id='calendar'></div>
+<div id="calendar-container">
+    <div id='calendar'></div>
+    <button id="exportEvents">Export Events</button>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function(){
@@ -105,11 +121,7 @@ document.addEventListener('DOMContentLoaded', function(){
     });
     calendar.render();
     fetchAvailability(calendar);
-    // Event listener for logging events
-    document.getElementById('logEvents').addEventListener('click', function() {
-        var events = calendar.getEvents();
-        console.log(events);
-    });
+
     document.getElementById('exportEvents').addEventListener('click', function() {
         var events = calendar.getEvents().map(function(event) {
             var startTime = event.start.getHours().toString().padStart(2, '0') + ':' + event.start.getMinutes().toString().padStart(2, '0');
