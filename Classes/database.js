@@ -6,8 +6,8 @@ export default class Database {
     this.connection = mysql.createConnection({
       host: "localhost",
       user: "root",
-      password: "admin132002!",
-      database: "tech",
+      password: "Noratlas128!!",
+      database: "project2024",
     });
 
     // Promisify the query method

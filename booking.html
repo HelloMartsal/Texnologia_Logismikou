@@ -7,63 +7,118 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <style>
     body {
-  font-family: sans-serif;
-  margin: 0; /* Remove padding */
-}
-
-h1 {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-#get-bookings {
-  background-color: #4CAF50; /* Green */
-  border: none;
-  color: white;
-  padding: 10px 20px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-.booking-container {
-  display: flex;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-  background-color: rgb(240, 240, 240); /* Light gray background for container */
-}
-
-.card {
-  width: 190px;
-  height: 254px;
-  border-radius: 20px;
-  padding: 5px;
-  box-shadow: rgba(151, 65, 252, 0.2) 0 15px 30px -5px;
-  background-image: linear-gradient(144deg, #AF40FF, #5B42F3 50%, #00DDEB);
-}
-
-.card__content {
-  background: rgb(5, 6, 45); /* Text color for card content */
-  border-radius: 17px;
-  width: 100%;
-  height: 100%;
-  padding: 15px;
-  color: white;
-}
-</style>
+      font-family: sans-serif;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #get-bookings {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .booking-container {
+      display: flex;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      background-color: rgb(240, 240, 240);
+    }
+    .card {
+      width: 190px;
+      height: 254px;
+      border-radius: 20px;
+      padding: 5px;
+      box-shadow: rgba(151, 65, 252, 0.2) 0 15px 30px -5px;
+      background-image: linear-gradient(144deg, #AF40FF, #5B42F3 50%, #00DDEB);
+      margin: 10px; /* Προσθέτουμε απόσταση μεταξύ των καρτών */
+    }
+    .card__content {
+      background: rgb(5, 6, 45);
+      border-radius: 17px;
+      width: 100%;
+      height: 100%;
+      padding: 15px;
+      color: white;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      padding-top: 60px;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgb(0,0,0);
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .star {
+      font-size: 2em;
+      cursor: pointer;
+      color: black;
+    }
+    .star.gold {
+      color: gold;
+    }
+    #reviewText {
+      width: 100%;
+      height: 100px;
+    }
+  </style>
 </head>
 <body>
   <h1>Booking History</h1>
   <div id="booking-history">
-    <div class="card"></div> </div>
+    <div class="card"></div>
+  </div>
+
+  <!-- Review Modal -->
+  <div id="reviewModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Submit a Review</h2>
+      <textarea id="reviewText" placeholder="Write your review here"></textarea>
+      <div id="starRating">
+        <span class="star" data-value="1">★</span>
+        <span class="star" data-value="2">★</span>
+        <span class="star" data-value="3">★</span>
+        <span class="star" data-value="4">★</span>
+        <span class="star" data-value="5">★</span>
+      </div>
+      <button id="submitReview">Submit</button>
+      <button id="cancelReview">Cancel</button>
+    </div>
+  </div>
 
   <script>
-    $(document).ready(function () {
-      fetchBookings();
-    });
-
     function fetchBookings() {
       try {
         $.ajax({
@@ -80,6 +135,7 @@ h1 {
                 html += `    <div class="card__content">`;
 
                 html += `      <h3>Booking ID: ${booking.ResID}</h3>`;
+                html += `      <button class="reviewBtn" data-id="${booking.ResID}">Review</button>`;
 
                 let statusColor = "";
                 switch (booking.ResStatus) {
@@ -99,7 +155,9 @@ h1 {
                 html += `      <p>Technician: ${booking.name} ${booking.surname}</p>`;
                 html += `      <p>Date: ${new Date(booking.ResDate).toLocaleDateString()}</p>`;
                 html += `      <p>Time: ${booking.ResTime}</p>`;
-
+                if (booking.ResStatus === "Done") {
+                  html += `      <button class="reviewBtn" data-id="${booking.ResID}">Review</button>`;
+                }
                 html += `    </div>`;
                 html += `  </div>`;
                 html += `</div>`;
@@ -109,6 +167,12 @@ h1 {
             }
 
             $("#booking-history").html(html);
+
+            // Προσθήκη event listeners στα κουμπιά "Review"
+            $(".reviewBtn").on("click", function() {
+              selectedReservationId = $(this).data("id");
+              $("#reviewModal").css("display", "block");
+            });
           },
           error: function (error) {
             console.error("An error occurred:", error);
@@ -118,6 +182,64 @@ h1 {
         console.error("An error occurred:", error);
       }
     }
+
+    $(document).ready(function () {
+      fetchBookings();
+
+      const reviewModal = $("#reviewModal");
+      const closeBtn = $(".close");
+      const submitReviewBtn = $("#submitReview");
+      const cancelReviewBtn = $("#cancelReview");
+      const reviewText = $("#reviewText");
+      const stars = $(".star");
+      let selectedRating = 0;
+      let selectedReservationId = null;
+
+      closeBtn.on("click", function() {
+        reviewModal.css("display", "none");
+      });
+
+      cancelReviewBtn.on("click", function() {
+        reviewModal.css("display", "none");
+      });
+
+      stars.on("click", function() {
+        selectedRating = $(this).data("value");
+        stars.removeClass("gold");
+        for (let i = 1; i <= selectedRating; i++) {
+          $(`.star[data-value="${i}"]`).addClass("gold");
+        }
+      });
+
+      submitReviewBtn.on("click", async function() {
+        const review = reviewText.val();
+        if (review && selectedRating) {
+          try {
+            const response = await fetch('/api/reviews', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                reservationId: selectedReservationId,
+                reviewText: review,
+                reviewScore: selectedRating
+              })
+            });
+            if (response.ok) {
+              alert("Thank you for your review!");
+              reviewModal.css("display", "none");
+            } else {
+              alert("Error submitting review.");
+            }
+          } catch (error) {
+            console.error("Error submitting review:", error);
+          }
+        } else {
+          alert("Please fill out both fields.");
+        }
+      });
+    });
   </script>
 </body>
 </html>
