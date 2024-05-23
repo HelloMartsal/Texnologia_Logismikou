@@ -288,9 +288,9 @@ app.get('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
 let cachedTechs = null;
 app.post('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
   if(req.body.called){
-    //console.log("called");
-    //here we do the filtering and return the techs
-
+    const { priceRange, reviewRange, specialities, services } = req.body;
+    const filterdTechs = await Tech.filterTechs(specialities, services, reviewRange, priceRange,cachedTechs);
+    res.json({ data: filterdTechs });
   }else {
     try {
       const techs = await Tech.getAllTechs(db);
@@ -339,7 +339,13 @@ app.post('/api/calendar', isAuthenticated, isTech, isLogged, async (req, res) =>
     res.status(500).send("Error occurred");
   }
 });
-  
+
+app.get('/tech/:username', isAuthenticated, isUser, isLogged, async (req, res) => {
+  const techId = req.params.username;
+  //res.sendFile(__dirname + '/tech_profile.html');
+  res.sendFile(__dirname + '/find_tech.html');
+
+});
 // ===============================================================================================================
 
 

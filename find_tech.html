@@ -1,10 +1,18 @@
 <!DOCTYPE html>
 <html>
-<link href="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.js"></script>
 <head>
     <title>Find Tech</title>
+    <link href="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.js"></script>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #f5f5f5;
+        }
+
         .container {
             display: flex;
         }
@@ -17,51 +25,105 @@
             top: 0;
             left: 0;
             background-color: #ff00b3;
+            color: white;
             padding-top: 60px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar select,
+        .sidebar p,
+        .sidebar button {
+            width: 80%;
+            margin: 10px auto;
+            display: block;
+            font-size: 16px;
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .sidebar button {
+            background-color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .sidebar button:hover {
+            background-color: #f1f1f1;
         }
 
         .sidebar a {
             padding: 8px 8px 8px 32px;
             text-decoration: none;
-            font-size: 25px;
-            color: #818181;
+            font-size: 18px;
+            color: white;
             display: block;
-            transition: 0.3s;
+            transition: color 0.3s;
         }
 
         .sidebar a:hover {
-            color: #f1f1f1;
+            color: #ddd;
         }
 
         .content {
             margin-left: 250px;
             padding: 20px;
+            background-color: #fff;
+        }
+
+        .content h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: #333;
         }
 
         .sub-container {
             display: flex;
             flex-wrap: wrap;
+            gap: 20px;
         }
 
         .item {
             width: 200px;
             height: 200px;
-            margin: 10px;
-            background-color: #f1f1f1;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer; /* Make items look clickable */
+        }
+
+        .item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .item p {
+            margin: 5px 0;
+            color: #333;
         }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <select id="filter1" class="filter">
-            <option value="">Select Filter 1</option>
+        <select id="filter1" class="filter" placeholder="Select Speciality">
+            <option value="" disabled selected>Select Speciality</option>
         </select>
-        <select id="filter2" class="filter">
-            <option value="">Select Filter 2</option>
+        <select id="filter2" class="filter" placeholder="Select Service">
+            <option value="" disabled selected>Select Service</option>
         </select>
-        <div id="filter3"></div>
+        <div id="filter3" style="width: 80%; margin: 10px auto;"></div>
         <p>Price: <span id="price-lower"></span> - <span id="price-upper"></span></p>
+        <div id="filter4" style="width: 80%; margin: 10px auto;"></div>
+        <p>Review Stars: <span id="review-lower"></span> - <span id="review-upper"></span></p>
         <button id="postButton">Send POST request</button>
+        <button onclick="location.reload();">Reset</button>
     </div>
     <div class="content">
         <h1>Find Tech</h1>
@@ -91,9 +153,36 @@
                 priceLower.textContent = values[handle];
             }
         });
-        sendPostRequest();
 
+        const filter4 = document.getElementById('filter4');
+        const reviewLower = document.getElementById('review-lower');
+        const reviewUpper = document.getElementById('review-upper');
+
+        noUiSlider.create(filter4, {
+            start: [1, 4],
+            connect: true,
+            step: 1,
+            range: {
+                'min': 0,
+                'max': 5
+            },
+            format: {
+                to: value => parseInt(value),
+                from: value => parseInt(value)
+            }
+        });
+
+        filter4.noUiSlider.on('update', function(values, handle) {
+            if (handle) {
+                reviewUpper.textContent = values[handle];
+            } else {
+                reviewLower.textContent = values[handle];
+            }
+        });
+
+        sendPostRequest();
     }
+
     fetch('/api/techs')
     .then(response => {
         if (!response.ok) {
@@ -128,49 +217,63 @@
     postButton.addEventListener('click', sendPostRequest);
 
     function sendPostRequest() {
-    const filters = Array.from(document.querySelectorAll('.filter')).map(filter => filter.value);
-    const priceRange = filter3.noUiSlider.get();
+        const priceRange = filter3.noUiSlider.get().map(Number);
+        const reviewRange = filter4.noUiSlider.get().map(Number);
+        const spec = document.getElementById('filter1');
+        const services = document.getElementById('filter2');
+        const specialities = spec.value;
 
-    const called = isFirstCall ? 0 : 1;
-    isFirstCall = false;
-    
+        
 
-    fetch('/api/techs', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ filters, priceRange, called }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        const subContainer = document.querySelector('.sub-container');
-        subContainer.innerHTML = '';
+        const called = isFirstCall ? 0 : 1;
+        isFirstCall = false;
 
-        data.data.forEach(entry => {
-            const item = document.createElement('div');
-            item.classList.add('item');
+        if (called){
+            // Check if all filters are filled
+            if (!priceRange[0] || !priceRange[1] || !reviewRange[0] || !reviewRange[1] || !specialities || !services.value) {
+                alert('Please fill all the filters before sending the request.');
+                return;
+            }
+        }
 
-            item.id = `item-${entry.id_tech}`;
+        fetch('/api/techs', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ priceRange, reviewRange, specialities, services: services.value, called}),
+        })
+        .then(response => response.json())
+        .then(data => {
+            const subContainer = document.querySelector('.sub-container');
+            subContainer.innerHTML = '';
 
-            const name = document.createElement('p');
-            name.textContent = `${entry.name} ${entry.surname}`;
-            item.appendChild(name);
+            data.data.forEach(entry => {
+                const item = document.createElement('div');
+                item.classList.add('item');
 
-            const years = document.createElement('p');
-            years.textContent = `${entry.experience_years} years`;
-            item.appendChild(years);
+                item.id = `item-${entry.id_tech}`;
 
-            item.addEventListener('click', () => {
-                console.log(`You clicked on item with id: ${item.id}`);
+                const name = document.createElement('p');
+                name.textContent = `${entry.name} ${entry.surname}`;
+                item.appendChild(name);
+
+                const years = document.createElement('p');
+                years.textContent = `${entry.experience_years} years`;
+                item.appendChild(years);
+
+                item.addEventListener('click', () => {
+                    console.log(`You clicked on item with id: ${entry.username}`);
+                    // Navigate to another page or perform an action
+                    // For example: window.location.href = `/tech/${entry.id_tech}`;
+                    window.location.href = `/tech/${entry.username}`;
+                });
+
+                subContainer.appendChild(item);
             });
-
-            subContainer.appendChild(item);
-        });
-    })
-    .catch(error => console.error('Error:', error));
-}
-
+        })
+        .catch(error => console.error('Error:', error));
+    }
     </script>
 </body>
 </html>
