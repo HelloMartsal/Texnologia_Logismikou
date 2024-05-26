@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Info</title>
+    <style>
+       body {
+           font-family: Arial, sans-serif;
+           margin: 0;
+           padding: 0;
+           box-sizing: border-box;
+           background-color: #f4f4f4;
+       }
+       .form-container {
+           max-width: 400px;
+           background-color: #fff;
+           padding: 32px 24px;
+           font-size: 14px;
+           font-family: inherit;
+           color: #212121;
+           display: flex;
+           flex-direction: column;
+           gap: 20px;
+           box-sizing: border-box;
+           border-radius: 10px;
+           box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.084), 0px 2px 3px rgba(0, 0, 0, 0.168);
+           margin: 20px auto;
+       }
+
+       .form-container button:active {
+           scale: 0.95;
+       }
+
+       .form-container .logo-container {
+           text-align: center;
+           font-weight: 600;
+           font-size: 18px;
+       }
+
+       .form-container .form {
+           display: flex;
+           flex-direction: column;
+       }
+
+       .form-container .form-group {
+           display: flex;
+           flex-direction: column;
+           gap: 2px;
+       }
+
+       .form-container .form-group label {
+           display: block;
+           margin-bottom: 5px;
+       }
+
+       .form-container .form-group input {
+           width: 100%;
+           padding: 12px 16px;
+           border-radius: 6px;
+           font-family: inherit;
+           border: 1px solid #ccc;
+       }
+
+       .form-container .form-group input::placeholder {
+           opacity: 0.5;
+       }
+
+       .form-container .form-group input:focus {
+           outline: none;
+           border-color: #1778f2;
+       }
+
+       .form-container .form-submit-btn {
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           font-family: inherit;
+           color: #fff;
+           background-color: #212121;
+           border: none;
+           width: 100%;
+           padding: 12px 16px;
+           font-size: inherit;
+           gap: 8px;
+           margin: 12px 0;
+           cursor: pointer;
+           border-radius: 6px;
+           box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.084), 0px 2px 3px rgba(0, 0, 0, 0.168);
+       }
+
+       .form-container .form-submit-btn:hover {
+           background-color: #313131;
+       }
+
+       .form-container .link {
+           color: #1778f2;
+           text-decoration: none;
+       }
+
+       .form-container .signup-link {
+           align-self: center;
+           font-weight: 500;
+       }
+
+       .form-container .signup-link .link {
+           font-weight: 400;
+       }
+
+       .form-container .link:hover {
+           text-decoration: underline;
+       }
+
+       /* Modal Styles */
+       .modal {
+           display: none;
+           position: fixed;
+           z-index: 1;
+           left: 0;
+           top: 0;
+           width: 100%;
+           height: 100%;
+           overflow: auto;
+           background-color: rgba(0,0,0,0.4);
+           backdrop-filter: blur(5px);
+           padding-top: 60px;
+           animation: fadeIn 0.3s;
+       }
+
+       .modal-content {
+           background-color: #fff;
+           margin: 5% auto;
+           padding: 20px;
+           border: 1px solid #888;
+           width: 80%;
+           max-width: 500px;
+           border-radius: 10px;
+           box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+           animation: slideIn 0.5s;
+       }
+
+       .close {
+           color: #aaa;
+           float: right;
+           font-size: 28px;
+           font-weight: bold;
+       }
+
+       .close:hover,
+       .close:focus {
+           color: black;
+           text-decoration: none;
+           cursor: pointer;
+       }
+
+       @keyframes fadeIn {
+           from {opacity: 0;}
+           to {opacity: 1;}
+       }
+
+       @keyframes slideIn {
+           from {transform: translateY(-20px);}
+           to {transform: translateY(0);}
+       }
+
+       .modal-form-group {
+           display: flex;
+           flex-direction: column;
+           margin-bottom: 15px;
+       }
+
+       .modal-form-group label {
+           margin-bottom: 5px;
+           font-weight: 600;
+       }
+
+       .modal-form-group input {
+           padding: 10px;
+           border: 1px solid #ccc;
+           border-radius: 5px;
+           font-size: 16px;
+       }
+
+       .modal-submit-btn {
+           background-color: #28a745;
+           color: white;
+           border: none;
+           padding: 10px 20px;
+           border-radius: 5px;
+           font-size: 16px;
+           cursor: pointer;
+           transition: background-color 0.3s;
+       }
+
+       .modal-submit-btn:hover {
+           background-color: #218838;
+       }
+
+       .modal-cancel-btn {
+           background-color: #dc3545;
+           color: white;
+           border: none;
+           padding: 10px 20px;
+           border-radius: 5px;
+           font-size: 16px;
+           cursor: pointer;
+           transition: background-color 0.3s;
+           margin-left: 10px;
+       }
+
+       .modal-cancel-btn:hover {
+           background-color: #c82333;
+       }
+
+       .button-group {
+           display: flex;
+           justify-content: flex-end;
+           margin-top: 20px;
+       }
+
+    </style>
+</head>
+<body>
+    <script>
+        var info;
+        document.addEventListener('DOMContentLoaded', function() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/user/accountinfo', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    info = JSON.parse(xhr.responseText);
+                    console.log(info);
+
+                    var NameDisplay = document.getElementById('NameDisplay');
+                    info[0].forEach(function(item) {
+                        NameDisplay.innerHTML += '<p>' + item.name + '</p>';
+                    });
+
+                    var SurNameDisplay = document.getElementById('SurNameDisplay');
+                    info[0].forEach(function(item) {
+                        SurNameDisplay.innerHTML += '<p>' + item.surname + '</p>';
+                    });
+
+                    var EmailDisplay = document.getElementById('EmailDisplay');
+                    info[0].forEach(function(item) {
+                        EmailDisplay.innerHTML += '<p>' + item.email + '</p>';
+                    });
+
+                    var PhoneDisplay = document.getElementById('PhoneDisplay');
+                    info[0].forEach(function(item) {
+                        PhoneDisplay.innerHTML += '<p>' + item.phone_number + '</p>';
+                    });
+
+                    var UsernameDisplay = document.getElementById('UsernameDisplay');
+                    info[0].forEach(function(item) {
+                        UsernameDisplay.innerHTML += '<p>' + item.username + '</p>';
+                    });
+
+                    var PasswordDisplay = document.getElementById('PasswordDisplay');
+                    info[0].forEach(function(item) {
+                        PasswordDisplay.innerHTML += '<p>' + item.password + '</p>';
+                    });
+
+                    var AddressDisplay = document.getElementById('AddressDisplay');
+                    info[0].forEach(function(item) {
+                        AddressDisplay.innerHTML += '<p>' + item.address + '</p>';
+                    });
+                }
+            };
+            xhr.send();
+        });
+
+        function openEditModal(field, value) {
+            document.getElementById('modal-field').value = field;
+            document.getElementById('modal-value').value = value;
+            document.getElementById('editModal').style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').style.display = "none";
+            window.location.href = window.location.href;
+        }
+
+        window.onclick = function(event) {
+            var modal = document.getElementById('editModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('editForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                var field = document.getElementById('modal-field').value;
+                var value = document.getElementById('modal-value').value;
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/user/updateinfo', true);
+                xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        try {
+                            const { field, value } = JSON.parse(xhr.responseText);
+                          // if (response.success) {
+                               // Update the displayed value on success
+                                switch (field) {
+                                   case 'name':
+                                  
+                                       document.getElementById('NameDisplay').innerHTML = '<p>' + value + '</p>';
+                                       console.log('Page reloaded');
+                                       window.location.reload();
+                                        break;
+                                    case 'surname':
+                                        document.getElementById('SurNameDisplay').innerHTML = '<p>' + value + '</p>';
+                                        window.location.reload();
+                                        break;
+                                    case 'email':
+                                        document.getElementById('EmailDisplay').innerHTML = '<p>' + value + '</p>';
+                                        window.location.reload();
+                                        break;
+                                    case 'phone_number':
+                                        document.getElementById('PhoneDisplay').innerHTML = '<p>' + value + '</p>';
+                                        window.location.reload();
+                                        break;
+                                    case 'username':
+                                        document.getElementById('UsernameDisplay').innerHTML = '<p>' + value + '</p>';
+                                        window.location.reload();
+                                        break;
+                                    case 'password':
+                                        // Do not display passwords, update backend only
+                                        window.location.reload();
+                                        break;
+                                    case 'address':
+                                        document.getElementById('AddressDisplay').innerHTML = '<p>' + value + '</p>';
+                                        window.location.reload();
+                                        break;
+                               //}
+                                // Close the modal after successful update
+                                console.log('Page reloaded');
+                                closeModal();
+                                
+                                window.location.href = window.location.href;
+                          // } else {
+                                //console.error(response.message);
+                                console.error('Request failed. Status:', xhr.status);
+                                console.log('Response:', xhr.responseText);
+
+                                //console.log('Errorrrrr')
+                                // Handle error message display or other action
+                            }
+                        } catch (error) {
+                            console.error('Error parsing JSON response:', error);
+                        }
+                    }
+                };
+
+                xhr.send(JSON.stringify({ field: field, value: value }));
+            });
+        });
+    </script>
+
+    <div class="form-container">
+        <div class="logo-container">Name</div>
+        <form class="form">
+            <div id="NameDisplay"></div>
+            <button class="form-submit-btn" type="button" onclick="openEditModal('name', info[0][0].name)">Edit</button>
+        </form>
+    </div>
+
+    <div class="form-container">
+        <div class="logo-container">Surname</div>
+        <form class="form">
+            <div id="SurNameDisplay"></div>
+            <button class="form-submit-btn" type="button" onclick="openEditModal('surname', info[0][0].surname)">Edit</button>
+        </form>
+    </div>
+
+    <div class="form-container">
+        <div class="logo-container">Email</div>
+        <form class="form">
+            <div id="EmailDisplay"></div>
+            <button class="form-submit-btn" type="button" onclick="openEditModal('email', info[0][0].email)">Edit</button>
+        </form>
+    </div>
+
+    <div class="form-container">
+        <div class="logo-container">Number</div>
+        <form class="form">
+            <div id="PhoneDisplay"></div>
+            <button class="form-submit-btn" type="button" onclick="openEditModal('phone_number', info[0][0].phone_number)">Edit</button>
+        </form>
+    </div>
+
+    <div class="form-container">
+        <div class="logo-container">Username</div>
+        <form class="form">
+            <div id="UsernameDisplay"></div>
+            <button class="form-submit-btn" type="button" onclick="openEditModal('username', info[0][0].username)">Edit</button>
+        </form>
+    </div>
+
+    <div class="form-container">
+        <div class="logo-container">Password</div>
+        <form class="form">
+            <div id="PasswordDisplay"></div>
+            <button class="form-submit-btn" type="button" onclick="openEditModal('password', info[0][0].password)">Edit</button>
+        </form>
+    </div>
+
+    <div class="form-container">
+        <div class="logo-container">Address</div>
+        <form class="form">
+            <div id="AddressDisplay"></div>
+            <button class="form-submit-btn" type="button" onclick="openEditModal('address', info[0][0].address)">Edit</button>
+        </form>
+    </div>
+
+    <!-- The Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <form id="editForm" class="form">
+                <div class="modal-form-group">
+                    <label for="modal-field">Field</label>
+                    <input type="text" id="modal-field" name="field" readonly>
+                </div>
+                <div class="modal-form-group">
+                    <label for="modal-value">Value</label>
+                    <input type="text" id="modal-value" name="value">
+                </div>
+                <div class="button-group">
+                    <button class="modal-submit-btn" type="submit">Save</button>
+                    <button class="modal-cancel-btn" type="button" onclick="closeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+
