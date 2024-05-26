@@ -179,41 +179,16 @@ function isAuthenticated(req, res, next) {
   app.post('/', async (req, res) => {
     const username = req.body.username;
     const passwd = req.body.passwd;
-    const sql = "CALL login(?,?)";
-    const getUserIdSql = "CALL getId(?,?)";
-  
-    try {
-      const results = await db.query(sql, [username, passwd]);
-  
-      const message = results[0][0].message;
-  
-      if (['Data transferred from admin successfully.', 'Data transferred from user successfully.', 'Data transferred from tech successfully.'].includes(message)) {
-        const getUserIdResults = await db.query(getUserIdSql, [username, passwd]);
-  
-        if (getUserIdResults && getUserIdResults.length > 0) {
-          const userId = getUserIdResults[0][0].userId;
-  
-          if (userId) {
-            req.session.userId = userId;
-  
-            if (message === 'Data transferred from admin successfully.') {
-              res.redirect(`/admin`);
-            } else if (message === 'Data transferred from user successfully.') {
-              res.redirect(`/user`);
-            } else if (message === 'Data transferred from tech successfully.') {
-              res.redirect(`/tech`);
-            }
-          } else {
-            res.status(401).send('Invalid credentials. Please try again.');
-          }
-        } else {
-          res.status(401).send('User not found.');
-        }
-      } else {
-        res.send(message);
-      }
-    } catch (err) {
-      console.error('Error during login query:', err);
+    const mess = await Account.login(db, username, passwd);
+    req.session.userId = mess[1];
+    if (mess[0] === 'Data transferred from admin successfully.') {
+      res.redirect(`/admin`);
+    } else if (mess[0] === 'Data transferred from user successfully.') {
+      res.redirect(`/user`);
+    } else if (mess[0] === 'Data transferred from tech successfully.') {
+      res.redirect(`/tech`);
+    } else {
+      res.send(mess[0]);
       res.status(500).send('Error occurred during login');
     }
   });
@@ -231,20 +206,12 @@ app.post('/signup', async (req, res) => {
   const address = req.body.address;
   const email = req.body.email;
   const date = new Date().toISOString().split('T')[0];      
-  const addAccountSql = "CALL addAccount(?,?,?,?,?,?,?,?)";
-
-  try {
-    const results = await db.query(addAccountSql, [username, passwd, phone, name, surname, address, email, date]);
-
-    const message = results[0][0].message;
-
-    if (message === 'Account submitted successfully') {
-      res.redirect(`/`);
-    } else {
-      res.send(message);
-    }
-  } catch (err) {
-    console.error('Error during signup query:', err);
+  const mess = await User.signupUser(db, username, passwd, name, surname, address, phone, email, date);
+  console.log(mess);
+  if (mess === 'Account submitted successfully') {
+    res.redirect('/');
+  } else {
+    res.send(mess);
     res.status(500).send('Error occurred during signup');
   }
 });
@@ -288,9 +255,9 @@ app.get('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
 let cachedTechs = null;
 app.post('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
   if(req.body.called){
-    //console.log("called");
-    //here we do the filtering and return the techs
-
+    const { priceRange, reviewRange, specialities, services } = req.body;
+    const filterdTechs = await Tech.filterTechs(specialities, services, reviewRange, priceRange,cachedTechs);
+    res.json({ data: filterdTechs });
   }else {
     try {
       const techs = await Tech.getAllTechs(db);
@@ -339,7 +306,31 @@ app.post('/api/calendar', isAuthenticated, isTech, isLogged, async (req, res) =>
     res.status(500).send("Error occurred");
   }
 });
+
+app.get('/tech/:username', isAuthenticated, isUser, isLogged, async (req, res) => {
+  const techId = req.params.username;
+  //res.sendFile(__dirname + '/tech_profile.html');
+  res.sendFile(__dirname + '/find_tech.html');
+
+});
+
+app.get("/user/account", isAuthenticated, isUser, isLogged, async (req, res) => {
+  res.sendFile(__dirname + '/account.html');
   
+});
+app.get("/user/accountinfo", (req, res) => {
+    res.json({ data: user });   
+ });
+
+ app.post('/user/updateinfo',isAuthenticated, isUser, isLogged, async (req, res) => {
+  let { field, value } = req.body;
+  const updated = await user.updateUserColumn(db,field, value);
+  field = updated.field;
+  value = updated.value;
+  res.json({ field, value });
+});
+
+
 // ===============================================================================================================
 
 

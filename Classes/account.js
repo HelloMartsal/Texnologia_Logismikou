@@ -10,6 +10,32 @@ class Account {
     this.date = date;
   }
 
+  static async login(db, username, passwd) {
+    const sql = "CALL login(?,?)";
+    const getUserIdSql = "CALL getId(?,?)";
+  
+    try {
+      const results = await db.query(sql, [username, passwd]);
+  
+      const message = results[0][0].message;
+  
+      if (['Data transferred from admin successfully.', 'Data transferred from user successfully.', 'Data transferred from tech successfully.'].includes(message)) {
+        const getUserIdResults = await db.query(getUserIdSql, [username, passwd]);
+  
+        if (getUserIdResults && getUserIdResults.length > 0) {
+          const userId = getUserIdResults[0][0].userId;
+  
+          if (userId) {
+            const table = [message, userId]
+  
+            return table;
+          }
+        }
+      } 
+    } catch (err) {
+      console.error('Error during login query:', err);
+    }
+  }
 }
   
   export default Account;
