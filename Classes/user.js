@@ -48,7 +48,9 @@ class User extends Account {
               return;
           }
           //res.send('Load succeded');
+          this[field] = value;
       });
+
       return {field, value};
     }
   }
