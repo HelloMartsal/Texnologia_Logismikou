@@ -20,6 +20,37 @@ class User extends Account {
         return null;
       }
     }
+
+    static async signupUser(db, username, passwd, name, surname, address, phone, email, date) {
+      const addAccountSql = "CALL addAccount(?,?,?,?,?,?,?,?)";
+
+      try {
+        const results = await db.query(addAccountSql, [username, passwd, phone, name, surname, address, email, date]);
+    
+        const message = results[0][0].message;
+    
+        if (message === 'Account submitted successfully') {
+          return message;
+        } else {
+          return 'Error occurred during signup';
+        }
+      } catch (err) {
+        console.error('Error during signup query:', err);
+      }
+    }
+
+    async updateUserColumn(db,field, value) {
+      const query = `UPDATE account SET ${field} = ? WHERE username = ?`;
+
+      db.query(query, [value, this.username], (err, results) => {
+          if (err) {
+              console.error('Error updating user info:', err);
+              return;
+          }
+          //res.send('Load succeded');
+      });
+      return {field, value};
+    }
   }
 
   export default User;
