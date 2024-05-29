@@ -249,6 +249,42 @@ app.post('/signup', async (req, res) => {
   }
 });
 
+app.post('/api/reviews', isAuthenticated, isUser, isLogged, async (req, res) => {
+  const { reviewText, reviewScore } = req.body;
+  const userUsername = req.session.userId; 
+   
+  try {
+    const query = 'SELECT ResTechUsername FROM reservation WHERE ResUserUsername = ?';
+    db.query(query, [userUsername], (err, results) => {
+      if (err) {
+        console.error('Error fetching tech username:', err);
+        res.status(500).send('Error fetching tech username');
+        return;
+      }
+
+      if (results.length > 0) {
+        const techUsername = results[0].ResTechUsername;
+
+        const sql = 'INSERT INTO review (ReviewText, ReviewUserUsername, ReviewTechUsername, ReviewDate, ReviewScore) VALUES (?, ?, ?, ?, ?)';
+        db.query(sql, [reviewText, userUsername, techUsername, new Date().toISOString().split('T')[0], reviewScore], (err, result) => {
+          if (err) {
+            console.error('Error inserting review:', err);
+            res.status(500).send('Error submitting review');
+            return;
+          }
+
+          res.status(200).send('Review submitted successfully');
+        });
+      } else {
+        res.status(404).send('No tech found for the user');
+      }
+    });
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).send('Server Error');
+  }
+});
+
 
 app.get('/user', isAuthenticated, isUser, isLogged,populateUser, (req, res) => {
   
