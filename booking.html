@@ -76,7 +76,7 @@ h1 {
             if (data.length > 0) {
               for (const booking of data) {
                 html += `<div class="booking-container">`;
-                html += `  <div class="card">`;
+                  html += `<div class="card" onclick="change_resrv(${booking.ResID})">`;
                 html += `    <div class="card__content">`;
 
                 html += `      <h3>Booking ID: ${booking.ResID}</h3>`;
@@ -100,6 +100,7 @@ h1 {
                 html += `      <p>Date: ${new Date(booking.ResDate).toLocaleDateString()}</p>`;
                 html += `      <p>Time: ${booking.ResTime}</p>`;
 
+
                 html += `    </div>`;
                 html += `  </div>`;
                 html += `</div>`;
@@ -117,6 +118,10 @@ h1 {
       } catch (error) {
         console.error("An error occurred:", error);
       }
+    }
+
+    function change_resrv(ResID) {
+      window.location.href = `/change_reserv/${ResID}`;
     }
   </script>
 </body>
