@@ -21,11 +21,10 @@ class Reservations {
       }
     }
 
-    static async makeReservation(db, username, techUsername, specialty, service, startDate, endDate) {
-      const sql = "CALL createReservation(?,?,?,?,?,?)";
-      console.log(username, techUsername, specialty, service, startDate, endDate);
+    static async makeReservation(db, username, techUsername, specialty, service, startDate, endDate,selectedOption,inputText) {
+      const sql = "CALL createReservation(?,?,?,?,?,?,?,?)";
       try {
-        const results = await db.query(sql, [username, techUsername, specialty, service, startDate, endDate]);
+        const results = await db.query(sql, [username, techUsername, specialty, service, startDate, endDate,selectedOption,inputText]);
         return results
       } catch (err) {
         console.error("Error making reservation:", err);

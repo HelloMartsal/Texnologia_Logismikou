@@ -347,13 +347,13 @@ app.get('/api/tech_calendar', isAuthenticated, isUser, isLogged, async (req, res
 });
 
 app.post('/api/tech_reserv', isAuthenticated, isUser, isLogged, async (req, res) => {
-  const { start,end } = req.body;
+  const { start,end,selectedOption,enteredText } = req.body;
   const tech = await Tech.createTech(db,req.session.techId);
   const specialities = req.session.specialities;
   const services = req.session.services;
 
   try {
-    const message = await Reservations.makeReservation(db, user.username, tech.username,tech.specialty,services, start, end);
+    const message = await Reservations.makeReservation(db, user.username, tech.username,tech.specialty,services, start, end,selectedOption,enteredText);
     res.json({ message });
   } catch (err) {
     console.error("Error making reservation:", err);
