@@ -16,6 +16,7 @@ import Notifications from "./Classes/notification.js";
 import Offers from "./Classes/offer.js";
 import Payment from "./Classes/payment.js";
 import Account from "./Classes/account.js";
+import { type } from "os";
 
 
 
@@ -256,6 +257,8 @@ let cachedTechs = null;
 app.post('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
   if(req.body.called){
     const { priceRange, reviewRange, specialities, services } = req.body;
+    req.session.specialities = specialities;
+    req.session.services = services;
     const filterdTechs = await Tech.filterTechs(specialities, services, reviewRange, priceRange,cachedTechs);
     res.json({ data: filterdTechs });
   }else {
@@ -290,7 +293,7 @@ app.get('/calendar', isAuthenticated, isTech, isLogged, async (req, res) => {
 
 app.get('/api/calendar', isAuthenticated, isTech, isLogged, async (req, res) => {
   try {
-    const availabity =await tech.getAvailabity(db);
+    const availabity =await tech.getAvailability(db);
     res.json({ data: availabity });
   } catch (err) {
     console.error("Error fetching calendar:", err);
@@ -309,8 +312,8 @@ app.post('/api/calendar', isAuthenticated, isTech, isLogged, async (req, res) =>
 
 app.get('/tech/:username', isAuthenticated, isUser, isLogged, async (req, res) => {
   const techId = req.params.username;
-  //res.sendFile(__dirname + '/tech_profile.html');
-  res.sendFile(__dirname + '/find_tech.html');
+  req.session.techId = techId;
+  res.sendFile(__dirname + '/tech_reserv.html');
 
 });
 
@@ -330,6 +333,33 @@ app.get("/user/accountinfo", (req, res) => {
   res.json({ field, value });
 });
 
+
+
+app.get('/api/tech_calendar', isAuthenticated, isUser, isLogged, async (req, res) => {
+  try {
+    const tech = await Tech.createTech(db,req.session.techId);
+    const availabity =await tech.getAvailability(db);
+    res.json({ data: availabity });
+  } catch (err) {
+    console.error("Error fetching calendar:", err);
+    res.status(500).send("Error occurred");
+  }
+});
+
+app.post('/api/tech_reserv', isAuthenticated, isUser, isLogged, async (req, res) => {
+  const { start,end } = req.body;
+  const tech = await Tech.createTech(db,req.session.techId);
+  const specialities = req.session.specialities;
+  const services = req.session.services;
+
+  try {
+    const message = await Reservations.makeReservation(db, user.username, tech.username,tech.specialty,services, start, end);
+    res.json({ message });
+  } catch (err) {
+    console.error("Error making reservation:", err);
+    res.status(500).send("Error occurred");
+  }
+});
 
 // ===============================================================================================================
 

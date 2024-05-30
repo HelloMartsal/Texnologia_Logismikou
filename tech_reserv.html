@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Reservation</title>
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/main.min.css' rel='stylesheet' />
+    <!-- FullCalendar JavaScript -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/main.min.js'></script>
+    <!-- Optional: FullCalendar locales for different languages -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/locales-all.min.js'></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f9f9f9;
+        }
+        #calendar-container {
+            width: 60%;
+            margin: auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        #exportEvents {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #exportEvents:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div id="calendar-container">
+    <div id='calendar'></div>
+    <button id="exportEvents">Export Events</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    var calendarElement = document.getElementById('calendar');
+    var calendar;
+
+    // Initialize FullCalendar
+    calendar = new FullCalendar.Calendar(calendarElement, {
+        initialView: 'timeGridWeek',
+        headerToolbar: false,
+        allDaySlot: false,
+        weekNumbers: false,
+        dayHeaderFormat: { weekday: 'short' },
+        editable: true,
+        eventClick: function(info) {
+            var current = new Date();
+            if (info.event.start < current) {
+                alert('You cannot choose a past slot');
+                return;
+            }
+            var start = info.event.start.toLocaleString();
+            var end = info.event.end.toLocaleString();
+            if (confirm('Do you choose this slot?')) {
+                
+                console.log('You chose this slot:', start, end);
+                postReservation(start, end);
+            }
+
+        },        
+    });
+    calendar.render();
+    fetchAvailability(calendar);
+
+    document.getElementById('exportEvents').addEventListener('click', function() {
+        var events = calendar.getEvents().map(function(event) {
+            var startTime = event.start.getHours().toString().padStart(2, '0') + ':' + event.start.getMinutes().toString().padStart(2, '0');
+            var endTime = event.end.getHours().toString().padStart(2, '0') + ':' + event.end.getMinutes().toString().padStart(2, '0');
+            const newdate = new Date(event.extendedProps.description);
+            return {
+                daysOfWeek: newdate.getDay(),
+                startTime: startTime,
+                endTime: endTime,
+                description: event.extendedProps.description
+            };
+        });
+        const string = JSON.stringify(events);
+        console.log(string);
+        postAvailability(events);
+    });
+
+});
+
+function fetchAvailability(calendar) {
+    fetch('/api/tech_calendar')
+    .then(response => response.json())
+    .then(data => {
+        if (!data || !data.data || !Array.isArray(data.data)) {
+            console.error('Invalid data format:', data);
+            return;
+        }
+        calendar.removeAllEvents(); // Clear existing events
+        const events = data.data.map(event => {
+
+            var eventDate = new Date(event.description);
+            return {
+                daysOfWeek:[eventDate.getDay() ], // FullCalendar expects an array of days
+                startTime: event.startTime,
+                endTime: event.endTime,
+                description: event.description
+            };
+        });
+        calendar.addEventSource(events);
+    })
+    .catch(error => {
+        console.error('Error fetching events:', error);
+    });
+}
+
+function postAvailability(events) {
+    fetch('/api/tech_calendar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(events)
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('Availability saved successfully!');
+        } else {
+            alert('Failed to save availability');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving availability:', error);
+    });
+}
+
+function postReservation(start, end) {
+    fetch('/api/tech_reserv', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            start: start,
+            end: end
+        })
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('Reservation saved successfully!');
+        } else {
+            alert('Failed to save reservation');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving reservation:', error);
+    });
+}
+
+</script>
+</body>
+</html>
