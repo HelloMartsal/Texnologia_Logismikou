@@ -1,3 +1,4 @@
+
 class Reservations {
     constructor(ResID, ResUserUsername, ResTechUsername, ResSpecialty, ResService, ResStatus, ResStartDate, ResEndDate,com_meth,com_text) {
       this.resId = ResID;
@@ -56,7 +57,29 @@ class Reservations {
         return false;
       }
     }
+    static async getUserBookingHistory(db, username) {
+      const sql = "CALL getUserBookingHistory(?)";
+      try {
+        const results = await db.query(sql, [username]);
+        return results[0];
+      } catch (err) {
+        console.error("Error fetching booking history:", err);
+        return null;
+      }
+    }
+
+    static async getTechBookingHistory(db, username) {
+      const sql = "CALL getTechBookingHistory(?)";
+      try {
+        const results = await db.query(sql, [username]);
+        return results[0];
+      } catch (err) {
+        console.error("Error fetching booking history:", err);
+        return null;
+      }
+    }
 
   }
   
   export default Reservations;
+

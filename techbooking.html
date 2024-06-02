@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking History</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <style>
+    body {
+  font-family: sans-serif;
+  margin: 0; /* Remove padding */
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+#get-bookings {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.booking-container {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  background-color: rgb(240, 240, 240); /* Light gray background for container */
+}
+
+.card {
+  width: 300px; /* Adjust width as needed */
+  height: 250px; /* Adjust height as needed */
+  border-radius: 25px;
+  padding: 10px;
+  background: linear-gradient(to right, #ECE9E9, #EAEAEA); /* Subtle gradient */
+  box-shadow: rgba(0, 0, 0, 0.1) 0 5px 15px;
+  transition: transform 0.2s ease-in-out; /* Add hover effect */
+}
+
+.card:hover {
+  transform: scale(1.02); /* Slightly enlarge on hover */
+}
+
+.card__content {
+  background: rgba(5, 6, 45, 0.8); /* Semi-transparent background */
+  border-radius: 20px;
+  width: 100%;
+  height: 100%;
+  line-height: 4px;
+  padding: 20px;
+  color: white;
+  display: flex; /* Allow for vertical alignment */
+  flex-direction: column; /* Stack elements vertically */
+  justify-content: space-between; /* Distribute space evenly */
+}
+
+.status-icon {
+  font-size: 20px; /* Adjust icon size */
+  margin-right: 10px;
+}
+.cost-details {
+  display: none; /* Initially hidden */
+  margin-top: 10px; /* Add some margin above the details */
+  background-color: #f5f5f5; /* Light gray background */
+  border-radius: 10px; /* Rounded corners */
+  padding: 20px; /* Add padding for content */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  width: 300px; /* Adjust width as needed */
+  max-width: 100%; /* Prevent it from exceeding container width */
+  margin: 0 auto; /* Center the element horizontally */
+}
+
+.cost-details input,
+.cost-details textarea {
+  width: 100%;
+  padding: 5px;
+  margin-bottom: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px; /* Add rounded corners to input fields */
+}
+
+.cost-details label {
+  display: block; /* Make labels appear on their own line */
+  margin-bottom: 5px; /* Add some space below labels */
+  font-weight: bold; /* Make labels stand out */
+}
+
+.cost-details-actions {
+      display: flex; /* Arrange buttons horizontally */
+      justify-content: space-between; /* Distribute space evenly */
+      margin-top: 10px; /* Add some space above buttons */
+    }
+
+    .cost-details-actions button {
+      background-color: #4CAF50; /* Green */
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .cost-details-actions .cancel-button {
+      background-color: #F44336; /* Red */
+    }
+
+</style>
+</head>
+<body>
+  <h1>Booking History</h1>
+  <div id="booking-history">
+    <div class="card"></div> </div>
+    
+  <script>
+    $(document).ready(function () {
+      fetchBookings();
+    });
+
+    function fetchBookings() {
+      try {
+        $.ajax({
+          url: "/api/techbooking",
+          method: "GET",
+          success: function (response) {
+            let data = response.data;
+            let html = "";
+
+            if (data.length > 0) {
+              for (const booking of data) {
+                html += `<div class="booking-container">`;
+                html += `  <div class="card">`;
+                html += `    <div class="card__content">`;
+
+                html += `      <h3>Booking ID: ${booking.ResID}</h3>`;
+
+                let statusColor = "";
+                switch (booking.ResStatus) {
+                  case "Pending":
+                    statusColor = "status-pending";
+                    html += `      <button class="issue-bill-button" data-booking-id="${booking.ResID}" data-username="${booking.username}">Issue Bill</button>`;
+                    break;
+                  case "Done":
+                    statusColor = "status-done";
+                    break;
+                  case "Cancelled":
+                    statusColor = "status-cancelled";
+                    break;
+                }
+                html += `      <p>Status: <span class="${statusColor}">${booking.ResStatus}</span></p>`;
+                html += `      <p>Customer's Name: ${booking.name}</p>`;
+                html += `      <p>Customer's Surname: ${booking.surname}</p>`;
+                html += `      <p>Date: ${new Date(booking.ResStartDate).toLocaleDateString()}</p>`;
+                html += `      <p>Time: ${booking.ResTime}</p>`;
+
+                html += `    </div>`;
+                html += `  </div>`;
+
+
+                html += `  <div class="cost-details" data-booking-id="${booking.ResID}">`;
+                html += `    <label for="cost-explanation">Explanation of Cost:</label>`;
+                html += `    <textarea id="cost-explanation" name="cost-explanation" rows="4"></textarea>`;
+                html += `    <label for="cost-amount">Cost:</label>`;
+                html += `    <input type="number" id="cost-amount" name="cost-amount">`;
+
+                html += `        <div class="cost-details-actions" data-visible="false">`;
+                html += `         <button class="confirm-button">Confirm</button>`;
+                html += `         <button class="cancel-button">Cancel</button>`;
+                html += `        </div>`;
+                html += `  </div>`;
+
+                html += `</div>`;
+              }
+            } else {
+              html = "<p>No booking history found.</p>";
+            }
+
+            $("#booking-history").html(html);
+
+
+            $(".issue-bill-button").click(function () {
+              const bookingId = $(this).data("bookingId");
+              const costDetails = $(`.cost-details[data-booking-id="${bookingId}"]`);
+              const actions = costDetails.find(".cost-details-actions");
+
+              // Toggle visibility of cost details
+              costDetails.toggle();
+
+              // Check if buttons have already been created (using data attribute)
+              if (actions.data("visible") === "false") {
+                actions.data("visible", "true"); // Mark buttons as created
+              }
+
+              // Show buttons if cost details are visible
+              if (costDetails.is(":visible")) {
+                actions.show();
+              } else {
+                actions.hide();
+              }
+            });
+            
+            // Attach click event listener to cancel button
+            $(".cancel-button").click(function () {
+              $(this).closest(".cost-details").hide(); // Close the cost details panel
+            });
+
+            // Attach click event listener to confirm button
+            $(".confirm-button").click(function () {
+                const bookingContainer = $(this).closest(".booking-container");
+                const username = bookingContainer.find(".issue-bill-button").data("username");
+                const costDetails = $(this).closest(".cost-details");
+                const explanation = costDetails.find("#cost-explanation").val().trim();
+                const cost = parseFloat(costDetails.find("#cost-amount").val());
+                // Additional validation for explanation and cost can be added here
+
+                if (!explanation || isNaN(cost)) {
+                  alert("Please fill in both Explanation of Cost and Cost amount.");
+                  return;
+                }
+
+                const data = {
+                  userUsername: username,
+                  explanation: explanation,
+                  price: cost,
+                  date: new Date().toISOString().slice(0, 10) 
+                };
+
+                $.ajax({
+                  url: "/api/create-notification", // Replace with your API endpoint for creating notifications
+                  method: "POST",
+                  data: JSON.stringify(data),
+                  contentType: "application/json; charset=utf-8",
+                  success: function (response) {
+                    if (response.success) {
+                      alert("Notification created successfully!");
+                      costDetails.hide(); // Hide cost details after successful creation
+                    } else {
+                      console.error("Error creating notification:", response.error);
+                      alert("An error occurred. Please try again later.");
+                    }
+                  },
+                  error: function (error) {
+                    console.error("Error sending request:", error);
+                    alert("An error occurred. Please check your network connection.");
+                  }
+                });
+              });
+          },
+          error: function (error) {
+            console.error("An error occurred:", error);
+          }
+        });
+      } catch (error) {
+        console.error("An error occurred:", error);
+      }
+    }
+
+
+  </script>
+</body>
+</html>

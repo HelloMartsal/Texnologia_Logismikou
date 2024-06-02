@@ -36,6 +36,17 @@ class Account {
       console.error('Error during login query:', err);
     }
   }
+
+  static async getTechAccInfo(db, username) {
+    const sql = "CALL getTechAccInfo(?)";
+    try {
+      const results = await db.query(sql, [username]);
+      return results[0][0];
+    } catch (err) {
+      console.error("Error fetching Technician's Account Information:", err);
+      return null;
+    }
+  }
 }
   
   export default Account;

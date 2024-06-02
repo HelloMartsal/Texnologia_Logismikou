@@ -122,7 +122,7 @@
         <p>Price: <span id="price-lower"></span> - <span id="price-upper"></span></p>
         <div id="filter4" style="width: 80%; margin: 10px auto;"></div>
         <p>Review Stars: <span id="review-lower"></span> - <span id="review-upper"></span></p>
-        <button id="postButton">Apply Filters</button>
+        <button id="postButton">Send POST request</button>
         <button onclick="location.reload();">Reset</button>
     </div>
     <div class="content">
@@ -264,9 +264,8 @@
 
                 item.addEventListener('click', () => {
                     console.log(`You clicked on item with id: ${entry.username}`);
-                    if (!called){
-                        alert("Please apply filters first");                    }
-                    else
+                    // Navigate to another page or perform an action
+                    // For example: window.location.href = `/tech/${entry.id_tech}`;
                     window.location.href = `/tech/${entry.username}`;
                 });
 
