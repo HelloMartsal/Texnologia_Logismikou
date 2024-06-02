@@ -6,10 +6,9 @@
     <script src="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
             background-color: #f5f5f5;
         }
 
@@ -24,7 +23,7 @@
             z-index: 1;
             top: 0;
             left: 0;
-            background-color: #ff00b3;
+            background-color: #6200ea;
             color: white;
             padding-top: 60px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
@@ -44,7 +43,7 @@
         }
 
         .sidebar button {
-            background-color: white;
+            background-color: #ffffff;
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
@@ -96,7 +95,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            cursor: pointer; /* Make items look clickable */
+            cursor: pointer;
         }
 
         .item:hover {
@@ -107,15 +106,16 @@
         .item p {
             margin: 5px 0;
             color: #333;
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <select id="filter1" class="filter" placeholder="Select Speciality">
+        <select id="filter1" class="filter">
             <option value="" disabled selected>Select Speciality</option>
         </select>
-        <select id="filter2" class="filter" placeholder="Select Service">
+        <select id="filter2" class="filter">
             <option value="" disabled selected>Select Service</option>
         </select>
         <div id="filter3" style="width: 80%; margin: 10px auto;"></div>
@@ -128,7 +128,6 @@
     <div class="content">
         <h1>Find Tech</h1>
         <div class="sub-container">
-    
         </div>
     </div>
     <script>
@@ -223,13 +222,10 @@
         const services = document.getElementById('filter2');
         const specialities = spec.value;
 
-        
-
         const called = isFirstCall ? 0 : 1;
         isFirstCall = false;
 
         if (called){
-            // Check if all filters are filled
             if (!priceRange[0] || !priceRange[1] || !reviewRange[0] || !reviewRange[1] || !specialities || !services.value) {
                 alert('Please fill all the filters before sending the request.');
                 return;
@@ -263,11 +259,11 @@
                 item.appendChild(years);
 
                 item.addEventListener('click', () => {
-                    console.log(`You clicked on item with id: ${entry.username}`);
                     if (!called){
-                        alert("Please apply filters first");                    }
-                    else
-                    window.location.href = `/tech/${entry.username}`;
+                        alert("Please apply filters first");
+                    } else {
+                        window.location.href = `/tech/${entry.username}`;
+                    }
                 });
 
                 subContainer.appendChild(item);
