@@ -189,8 +189,7 @@ function isAuthenticated(req, res, next) {
     } else if (mess[0] === 'Data transferred from tech successfully.') {
       res.redirect(`/tech`);
     } else {
-      res.send(mess[0]);
-      res.status(500).send('Error occurred during login');
+      res.redirect('/');
     }
   });
 
@@ -358,10 +357,8 @@ app.post('/api/create-notification', async (req, res) => {
 
   try {
     // Create notification record in the database
-    const sql = 'INSERT INTO NotificBill (userUsername, techUsername, explanation, price, date) VALUES (?, ?, ?, ?, ?)';
     const values = [userUsername, tech.username, explanation, price, date];
-    await db.query(sql, values);
-
+    await Notification.insertNotification(db, values);
     // Send notification (optional)
     // ... (code to send notification to customer and/or technician)
 
@@ -371,19 +368,15 @@ app.post('/api/create-notification', async (req, res) => {
     res.status(500).json({ error: 'Failed to create notification' });
   }
 });
-app.post('/check-notifications', isAuthenticated, isUser, isLogged, populateUser, (req, res) => {
+app.post('/check-notifications', isAuthenticated, isUser, isLogged, populateUser, async (req, res) => {
   const username = user.username;
-
-  // Use the database connection pool to query for notifications
-  db.query(`SELECT * FROM NotificBill WHERE userUsername = '${username}' AND flag = 1`, (err, rows) => {
-    if (err) {
-      console.error('Error checking notifications:', err);
-      return res.status(500).json({ message: 'Internal server error' });
-    }
-
-    const hasNotification = rows.length > 0;
-    res.json({ status: hasNotification ? 'notification present' : 'no notification' });
-  });
+  try {
+    const notifications = await Notification.getNotifications(db, username);
+    res.json({ notifications });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
 });
 
 app.get('/MyAccountTech', isAuthenticated, isTech, isLogged, populateTech, async (req, res) => {
@@ -402,80 +395,24 @@ app.get('/api/MyAccountTech', isAuthenticated, isTech, isLogged, populateTech, a
 app.post('/api/UpdateAccountTech', async (req, res) => {
   const { field, value } = req.body; 
 
-    // Update logic based on field name
-    if (field === 'specialty_name') {
-      try {
-        // Find specialty ID based on current specialty value
-        const currentSpecialty = await db.query('SELECT specialty FROM tech WHERE username_t = ?', [tech.username]);
-        const specialtyId = currentSpecialty[0].specialty;
-  
-        // Update specialty table with new name
-        const updateSpecialtyQuery = `UPDATE specialty SET name = ? WHERE id_spec = ?`;
-        await db.query(updateSpecialtyQuery, [value, specialtyId]);
-  
-        res.json({ success: true }); // Respond with success
-      } catch (error) {
-        console.error("Error updating specialty:", error);
-        res.status(500).json({ error: "Error updating account" });
-      }
-    } else {
-      // Handle other update logic
-      let updateTable = 'account';
-      let usernameColumn = 'username';
-  
-      if (field === 'experience_years') {
-        updateTable = 'tech';
-        usernameColumn = 'username_t';
-      }
-  
-      const updateQuery = `UPDATE ${updateTable} SET ${field} = ? WHERE ${usernameColumn} = ?`;
-
   try {
-    const [rows, fields] = await db.query(updateQuery, [value, tech.username]);
-    if (rows.affectedRows === 1) {
-      res.json({ success: true }); 
-    } else {
-      console.error("Unexpected update result:", rows);
-      res.status(500).json({ error: "Error updating account" });
-    }
-  } catch (error) {
-    console.error("Error updating account:", error);
-    res.status(500).json({ error: "Error updating account" });
+    const updated = await tech.updateTechColumn(db,field, value);
+    res.json({ updated });
+  } catch (err) {
+    console.error("Error updating Technician's Account Info:", err);
+    res.status(500).send("Error occurred");
   }
-}
 });
 
 
 app.post('/api/reviews', isAuthenticated, isUser, isLogged, async (req, res) => {
-const { reviewText, reviewScore } = req.body;
+const { reservationId,reviewText, reviewScore } = req.body;
 const userUsername = req.session.userId; 
  
 try {
-  const query = 'SELECT ResTechUsername FROM reservation WHERE ResUserUsername = ?';
-  db.query(query, [userUsername], (err, results) => {
-    if (err) {
-      console.error('Error fetching tech username:', err);
-      res.status(500).send('Error fetching tech username');
-      return;
-    }
-
-    if (results.length > 0) {
-      const techUsername = results[0].ResTechUsername;
-
-      const sql = 'INSERT INTO review (ReviewText, ReviewUserUsername, ReviewTechUsername, ReviewDate, ReviewScore) VALUES (?, ?, ?, ?, ?)';
-      db.query(sql, [reviewText, userUsername, techUsername, new Date().toISOString().split('T')[0], reviewScore], (err, result) => {
-        if (err) {
-          console.error('Error inserting review:', err);
-          res.status(500).send('Error submitting review');
-          return;
-        }
-
-        res.status(200).send('Review submitted successfully');
-      });
-    } else {
-      res.status(404).send('No tech found for the user');
-    }
-  });
+  const reserv = await Reservations.getReservation(db,reservationId);
+  Review.addReview(db, reviewText, userUsername, reserv.resTechUsername, reviewScore);
+  res.json({ message: 'Review added successfully' });  
 } catch (err) {
   console.error('Error:', err);
   res.status(500).send('Server Error');

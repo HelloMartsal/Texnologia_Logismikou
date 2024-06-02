@@ -87,7 +87,49 @@ class Tech extends Account {
         return null;
       }
     }
-  }
+    async updateTechColumn(db, field, value) {
+              // Update logic based on field name
+        if (field === 'specialty_name') {
+          try {
+            // Find specialty ID based on current specialty value
+            const currentSpecialty = await db.query('SELECT specialty FROM tech WHERE username_t = ?', [this.username]);
+            const specialtyId = currentSpecialty[0].specialty;
+      
+            // Update specialty table with new name
+            const updateSpecialtyQuery = `UPDATE specialty SET name = ? WHERE id_spec = ?`;
+            await db.query(updateSpecialtyQuery, [value, specialtyId]);
+      
+            return true;
+          } catch (error) {
+            console.error("Error updating specialty:", error);
+            return false;
+          }
+        } else {
+            // Handle other update logic
+            let updateTable = 'account';
+            let usernameColumn = 'username';
+        
+            if (field === 'experience_years') {
+              updateTable = 'tech';
+              usernameColumn = 'username_t';
+            }
+        
+            const updateQuery = `UPDATE ${updateTable} SET ${field} = ? WHERE ${usernameColumn} = ?`;
+
+            try {
+              const [rows, fields] = await db.query(updateQuery, [value, this.username]);
+              if (rows.affectedRows === 1) {
+                return true;
+              } else {
+                return false;
+              }
+            } catch (error) {
+              console.error(`Error updating ${field}:`, error);
+              return false;
+            }
+        }
+    }
+}
 
   
   export default Tech;
