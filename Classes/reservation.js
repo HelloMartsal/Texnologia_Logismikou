@@ -1,3 +1,4 @@
+
 class Reservations {
     constructor(ResID, ResUserUsername, ResTechUsername, ResSpecialty, ResService, ResStatus, ResStartDate, ResEndDate,com_meth,com_text) {
       this.resId = ResID;
@@ -81,3 +82,4 @@ class Reservations {
   }
   
   export default Reservations;
+

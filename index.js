@@ -347,16 +347,73 @@ app.get('/api/tech_calendar', isAuthenticated, isUser, isLogged, async (req, res
 });
 
 app.post('/api/tech_reserv', isAuthenticated, isUser, isLogged, async (req, res) => {
-  const { start,end } = req.body;
+  const { start,end,selectedOption,enteredText } = req.body;
   const tech = await Tech.createTech(db,req.session.techId);
   const specialities = req.session.specialities;
   const services = req.session.services;
 
   try {
-    const message = await Reservations.makeReservation(db, user.username, tech.username,tech.specialty,services, start, end);
+    const message = await Reservations.makeReservation(db, user.username, tech.username,tech.specialty,services, start, end,selectedOption,enteredText);
     res.json({ message });
   } catch (err) {
     console.error("Error making reservation:", err);
+    res.status(500).send("Error occurred");
+  }
+});
+
+app.post('/api/tech_serv/update', isAuthenticated, isUser, isLogged, async (req, res) => {
+  const events = req.body;
+
+  try {
+    const tech = await Tech.createTech(db,req.session.techId);
+    await tech.setAvailability(db, events);
+  } catch (err) {
+    console.error("Error setting availability:", err);
+    res.status(500).send("Error occurred");
+  }
+});
+
+app.get('/change_reserv/:id', isAuthenticated, isUser, isLogged, async (req, res) => {
+  const id = req.params.id;
+  req.session.resId = id;
+  res.sendFile(__dirname + '/change_reserv.html');
+});
+
+app.get('/api/reserv_calendar', isAuthenticated, isUser, isLogged, async (req, res) => {
+  const id = req.session.resId;
+  try {
+    const reserv = await Reservations.getReservation(db,id);
+    req.session.techId = reserv.resTechUsername;
+    const tech = await Tech.createTech(db,reserv.resTechUsername);
+    const availabity =await tech.getAvailability(db);
+    res.json({ data: availabity });
+  } catch (err) {
+    console.error("Error fetching reservation:", err);
+    res.status(500).send("Error occurred");
+  }
+});
+
+app.get('/api/reserv_info', isAuthenticated, isUser, isLogged, async (req, res) => {
+  const id = req.session.resId;
+  try {
+    const reserv = await Reservations.getReservation(db,id);
+    await reserv.deleteReservation(db);
+    res.json({reserv});
+  } catch (err) {
+    console.error("Error fetching reservation:", err);
+    res.status(500).send("Error occurred");
+  }
+});
+
+app.post('/api/change_reserv', isAuthenticated, isUser, isLogged, async (req, res) => {
+  const id = req.session.resId;
+  try{
+    const reserv = await Reservations.getReservation(db,id);
+    const message = await Reservations.makeReservation(db, reserv.resUserUsername, reserv.resTechUsername,reserv.ResSpecialty,reserv.resService, req.body.start, req.body.end,req.body.selectedOption,req.body.enteredText);
+    res.json({ message });
+  
+  } catch (err) {
+    console.error("Error changing reservation:", err);
     res.status(500).send("Error occurred");
   }
 });
