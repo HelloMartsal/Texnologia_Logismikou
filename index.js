@@ -12,7 +12,8 @@ import reservation from "./reservation.js";
 import notification from "./notification.js";
 import Offer from "./offer.js";
 import Payment from "./payment.js";
-
+//const util = require('util');
+import util from "util";
 
 
 
@@ -44,7 +45,9 @@ const db = mysql.createConnection({
     database: "findtech",
   });
 
+  const queryPromise = util.promisify(db.query).bind(db);
 
+  
 
 
   app.get("/", (req, res) => {
@@ -450,6 +453,25 @@ app.post('/api/calendar', isAuthenticated, isTech, isLogged, async (req, res) =>
   } catch (err) {
     console.error("Error setting availability:", err);
     res.status(500).send("Error occurred");
+  }
+});
+
+app.post('/user/verify', async (req, res) => {
+  const { username, password } = req.body;
+
+  
+
+  try {
+      const user = await queryPromise('SELECT * FROM account WHERE username = ? AND password = ?', [username, password]);
+
+      if (user.length > 0) {
+          res.json({ success: true });
+      } else {
+          res.json({ success: false });
+      }
+  } catch (err) {
+      console.error('Error during verification query:', err);
+      res.status(500).send('Error occurred during verification');
   }
 });
 

@@ -223,6 +223,8 @@
 <body>
     <script>
         var info;
+        var fieldToEdit = '';
+        var valueToEdit = '';
         document.addEventListener('DOMContentLoaded', function() {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', '/user/accountinfo', true);
@@ -270,6 +272,17 @@
             xhr.send();
         });
 
+        function openVerifyModal(username, password) {
+            fieldToEdit = username;
+            valueToEdit = password;
+            document.getElementById('verifyModal').style.display = "block";
+        
+        }
+
+        function closeVerifyModal() {
+            document.getElementById('verifyModal').style.display = "none";
+        }
+
         function openEditModal(field, value) {
             document.getElementById('modal-field').value = field;
             document.getElementById('modal-value').value = value;
@@ -281,14 +294,70 @@
             window.location.href = window.location.href;
         }
 
+
+
+
+
         window.onclick = function(event) {
-            var modal = document.getElementById('editModal');
-            if (event.target == modal) {
-                modal.style.display = "none";
+            var verifyModal = document.getElementById('verifyModal');
+            var editModal = document.getElementById('editModal');
+            
+            if (event.target == editModal) {
+                editModal.style.display = "none";
+            }
+            if (event.target == verifyModal) {
+                verifyModal.style.display = "none";
             }
         }
 
+
+        
+
+
+
         document.addEventListener('DOMContentLoaded', function() {
+
+
+             document.getElementById('verifyForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                var username = document.getElementById('verify-username').value;
+                var password = document.getElementById('verify-password').value;
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/user/verify', true);
+                xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        console.log("HIIIIII");
+                        if (response.success) {
+                            //openVerifyModal();
+                            //closeModal();
+                            console.log("HIIIIII");
+                           openEditModal(field,value);
+                           // closeModal();
+                        } else {
+                            alert('Verification failed. Please try again.');
+                            closeVerifyModal();
+                            
+                        }
+                    }
+                };
+
+                xhr.send(JSON.stringify({ username: username, password: password }));
+            });
+
+
+
+
+
+
+
+
+
+
             document.getElementById('editForm').addEventListener('submit', function(event) {
                 event.preventDefault();
 
@@ -405,7 +474,7 @@
         <div class="logo-container">Password</div>
         <form class="form">
             <div id="PasswordDisplay"></div>
-            <button class="form-submit-btn" type="button" onclick="openEditModal('password', info[0][0].password)">Edit</button>
+            <button class="form-submit-btn" type="button" onclick="openVerifyModal('password', info[0][0].password)">Edit</button>
         </form>
     </div>
 
@@ -416,6 +485,32 @@
             <button class="form-submit-btn" type="button" onclick="openEditModal('address', info[0][0].address)">Edit</button>
         </form>
     </div>
+
+
+
+
+
+    <!-- Verification Modal -->
+<div id="verifyModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeVerifyModal()">&times;</span>
+        <form id="verifyForm" class="form">
+            <div class="modal-form-group">
+                <label for="verify-username">Username</label>
+                <input type="text" id="verify-username" name="username" required>
+            </div>
+            <div class="modal-form-group">
+                <label for="verify-password">Password</label>
+                <input type="password" id="verify-password" name="password" required>
+            </div>
+            <div class="button-group">
+                <button class="modal-submit-btn" type="submit"  onclick="openEditModal('password', info[0][0].password)">Verify</button>
+                <button class="modal-cancel-btn" type="button" onclick="closeVerifyModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 
     <!-- The Modal -->
     <div id="editModal" class="modal">
@@ -437,6 +532,12 @@
             </form>
         </div>
     </div>
+
+
+
+
+
+    
 </body>
 </html>
 
