@@ -56,7 +56,7 @@ class Tech extends Account {
       });
     }
 
-    async getAvailability(db) {
+    async getAvailabity(db) {
       const sql = "CALL getAvailability(?)";
       try {
         const results = await db.query(sql, [this.username]);

@@ -107,9 +107,10 @@
   </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener('DOMContentLoaded',async function(){
     var calendarElement = document.getElementById('calendar');
     var calendar;
+
 
     // Initialize FullCalendar
     calendar = new FullCalendar.Calendar(calendarElement, {
@@ -148,22 +149,35 @@ document.addEventListener('DOMContentLoaded', function(){
                     var selectedOption = select.options[select.selectedIndex].value;
                     var input = document.getElementById("myInput");
                     var enteredText = input.value;
+
                     postReservation(start, end, selectedOption, enteredText);
-                    info.event.remove();
-                    var events = calendar.getEvents().map(function(event) {
-                        var startTime = event.start.getHours().toString().padStart(2, '0') + ':' + event.start.getMinutes().toString().padStart(2, '0');
-                        var endTime = event.end.getHours().toString().padStart(2, '0') + ':' + event.end.getMinutes().toString().padStart(2, '0');
-                        const newdate = new Date(event.extendedProps.description);
-                        return {
-                            daysOfWeek: newdate.getDay(),
-                            startTime: startTime,
-                            endTime: endTime,
-                            description: event.extendedProps.description
-                        };
+                    fetchReservation(calendar).then(([startDate, endDate, string]) => {
+                        // You can use startDate, endDate, and string here
+                        calendar.addEvent({
+                            start: startDate,
+                            end: endDate,
+                            description: string
+                        });
+                        info.event.remove();
+
+                        var events = calendar.getEvents().map(function(event) {
+                            var startTime = event.start.getHours().toString().padStart(2, '0') + ':' + event.start.getMinutes().toString().padStart(2, '0');
+                            var endTime = event.end.getHours().toString().padStart(2, '0') + ':' + event.end.getMinutes().toString().padStart(2, '0');
+                            const newdate = new Date(event.extendedProps.description);
+                            return {
+                                daysOfWeek: newdate.getDay(),
+                                startTime: startTime,
+                                endTime: endTime,
+                                description: event.extendedProps.description
+                            };
+                        });
+                        const send = JSON.stringify(events);
+                        console.log(events);
+                        postAvailability(events);
+                        modal.style.display = "none";
                     });
-                    const string = JSON.stringify(events);
-                    postAvailability(events);
-                    modal.style.display = "none";
+                    
+                    
                     
 
                 }
@@ -177,10 +191,30 @@ document.addEventListener('DOMContentLoaded', function(){
     fetchAvailability(calendar);
 
 
+    async function fetchReservation(calendar) {
+        try {
+            const response = await fetch('/api/reserv_info');
+            const data = await response.json();
+            var reserv = data.reserv;
+            var startDate = parseDateFromString(reserv.resStartDate);
+            var endDate = parseDateFromString(reserv.resEndDate);
+            var string = startDate.toString();
+            console.log(startDate);
+            console.log(endDate);
+            console.log(string);
+            return [startDate, endDate, string];
+        } catch (error) {
+            console.error('Error fetching events:', error);
+        }
+    }
+
+
+
 });
 
+
 function fetchAvailability(calendar) {
-    fetch('/api/tech_calendar')
+    fetch('/api/reserv_calendar')
     .then(response => response.json())
     .then(data => {
         if (!data || !data.data || !Array.isArray(data.data)) {
@@ -207,7 +241,7 @@ function fetchAvailability(calendar) {
 
 
 function postReservation(start, end, selectedOption, enteredText) {
-    fetch('/api/tech_reserv', {
+    fetch('/api/change_reserv', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -248,6 +282,40 @@ function postAvailability(events) {
     .catch(error => {
         console.error('Error saving availability:', error);
     });
+}
+
+
+
+
+
+
+function parseDateFromString(dateString) {
+    var parts = dateString.split(', ');
+    
+    var dateParts = parts[0].split('/');
+    var month = parseInt(dateParts[0]) - 1; 
+    var day = parseInt(dateParts[1]);
+    var year = parseInt(dateParts[2]);
+
+  
+    var timeParts = parts[1].split(' ');
+    var time = timeParts[0].split(':');
+    var hour = parseInt(time[0]);
+    var minute = parseInt(time[1]);
+    var second = 0; // Default to 0 seconds
+    var meridiem = timeParts[1];
+
+    // Adjust hour for PM time
+    if (meridiem === 'PM' && hour !== 12) {
+        hour += 12; // Convert to 24-hour format
+    } else if (meridiem === 'AM' && hour === 12) {
+        hour = 0; // 12 AM is midnight
+    }
+
+    // Create a new Date object with the parsed components
+    var dateObject = new Date(year, month, day, hour, minute, second);
+
+    return dateObject;
 }
 
 </script>

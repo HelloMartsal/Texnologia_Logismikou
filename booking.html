@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,15 +8,91 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 0;
+  font-family: sans-serif;
+  margin: 0; /* Remove padding */
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+#get-bookings {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.booking-container {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  background-color: rgb(240, 240, 240); /* Light gray background for container */
+}
+
+.card {
+  width: 220px; /* Adjust width as needed */
+  height: 250px; /* Adjust height as needed */
+  border-radius: 25px;
+  padding: 10px;
+  background: linear-gradient(to right, #ECE9E9, #EAEAEA); /* Subtle gradient */
+  box-shadow: rgba(0, 0, 0, 0.1) 0 5px 15px;
+  transition: transform 0.2s ease-in-out; /* Add hover effect */
+}
+
+.card:hover {
+  transform: scale(1.02); /* Slightly enlarge on hover */
+}
+
+.card__content {
+  background: rgba(5, 6, 45, 0.8); /* Semi-transparent background */
+  border-radius: 20px;
+  width: 100%;
+  height: 100%;
+  line-height: 4px;
+  padding: 20px;
+  color: white;
+  display: flex; /* Allow for vertical alignment */
+  flex-direction: column; /* Stack elements vertically */
+  justify-content: space-between; /* Distribute space evenly */
+}
+
+.status-icon {
+  font-size: 20px; /* Adjust icon size */
+  margin-right: 10px;
+}
+.reprogramming {
+  display: none; /* Initially hidden */
+  margin-top: 10px; /* Add some margin above the details */
+  background-color: #f5f5f5; /* Light gray background */
+  border-radius: 10px; /* Rounded corners */
+  padding: 20px; /* Add padding for content */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  width: 300px; /* Adjust width as needed */
+  max-width: 100%; /* Prevent it from exceeding container width */
+  margin: 0 auto; /* Center the element horizontally */
+}
+
+.reprogramming label {
+  display: block; /* Make labels appear on their own line */
+  margin-bottom: 5px; /* Add some space below labels */
+  font-weight: bold; /* Make labels stand out */
+}
+
+.reprogramming-actions {
+      display: flex; /* Arrange buttons horizontally */
+      justify-content: space-between; /* Distribute space evenly */
+      margin-top: 10px; /* Add some space above buttons */
     }
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    #get-bookings {
-      background-color: #4CAF50;
+
+    .reprogramming-actions button {
+      background-color: #4CAF50; /* Green */
       border: none;
       color: white;
       padding: 10px 20px;
@@ -24,30 +101,13 @@
       display: inline-block;
       cursor: pointer;
       border-radius: 5px;
+      font-size: 14px;
     }
-    .booking-container {
-      display: flex;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-      background-color: rgb(240, 240, 240);
+
+    .reprogramming-actions .cancel-button {
+      background-color: #F44336; /* Red */
     }
-    .card {
-      width: 190px;
-      height: 254px;
-      border-radius: 20px;
-      padding: 5px;
-      box-shadow: rgba(151, 65, 252, 0.2) 0 15px 30px -5px;
-      background-image: linear-gradient(144deg, #AF40FF, #5B42F3 50%, #00DDEB);
-      margin: 10px; /* Προσθέτουμε απόσταση μεταξύ των καρτών */
-    }
-    .card__content {
-      background: rgb(5, 6, 45);
-      border-radius: 17px;
-      width: 100%;
-      height: 100%;
-      padding: 15px;
-      color: white;
-    }
+
     .modal {
       display: none;
       position: fixed;
@@ -119,6 +179,10 @@
   </div>
 
   <script>
+    $(document).ready(function () {
+      fetchBookings();
+    });
+
     function fetchBookings() {
       try {
         $.ajax({
@@ -135,15 +199,16 @@
                 html += `    <div class="card__content">`;
 
                 html += `      <h3>Booking ID: ${booking.ResID}</h3>`;
-                html += `      <button class="reviewBtn" data-id="${booking.ResID}">Review</button>`;
 
                 let statusColor = "";
                 switch (booking.ResStatus) {
                   case "Pending":
                     statusColor = "status-pending";
+                    html += `      <button class="issue-bill-button" data-booking-id="${booking.ResID}">Reprogram</button>`;
                     break;
                   case "Done":
                     statusColor = "status-done";
+                    html += `      <button class="reviewBtn" data-id="${booking.ResID}">Review</button>`;
                     break;
                   case "Cancelled":
                     statusColor = "status-cancelled";
@@ -153,13 +218,21 @@
                 html += `      <p>Service: ${booking.service_name}</p>`;
                 html += `      <p>Specialty: ${booking.specialty_name}</p>`;
                 html += `      <p>Technician: ${booking.name} ${booking.surname}</p>`;
-                html += `      <p>Date: ${new Date(booking.ResDate).toLocaleDateString()}</p>`;
+                html += `      <p>Date: ${new Date(booking.ResStartDate).toLocaleDateString()}</p>`;
                 html += `      <p>Time: ${booking.ResTime}</p>`;
-                if (booking.ResStatus === "Done") {
-                  html += `      <button class="reviewBtn" data-id="${booking.ResID}">Review</button>`;
-                }
+
                 html += `    </div>`;
                 html += `  </div>`;
+
+                html += `  <div class="reprogramming" data-booking-id="${booking.ResID}">`;
+                html += `    <label for="cost-explanation">Would you like to cancel or reprogram the reservation?</label>`;
+
+                html += `        <div class="reprogramming-actions" data-visible="false">`;
+                html += `         <button class="confirm-button">Reprogram</button>`;
+                html += `         <button class="cancel-button">Cancel</button>`;
+                html += `        </div>`;
+                html += `  </div>`;
+
                 html += `</div>`;
               }
             } else {

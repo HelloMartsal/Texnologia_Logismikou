@@ -9,6 +9,18 @@ class Review {
       this.reviewscore = ReviewScore;
     }
   
+    static async addReview(db, reviewText, reviewUserUsername, reviewTechUsername, reviewScore) {
+      const reviewDate = new Date().toISOString().split('T')[0]; // Σημερινή ημερομηνία
+      const sql = 'INSERT INTO review (ReviewText, ReviewUserUsername, ReviewTechUsername, ReviewDate, ReviewScore) VALUES (?, ?, ?, ?, ?)';
+  
+      try {
+        await db.query(sql, [reviewText, reviewUserUsername, reviewTechUsername, reviewDate, reviewScore]);
+      } catch (err) {
+        console.error('Error inserting review:', err);
+        throw err;
+      }
+    }
+    
     static async getReviewsAverageByTech(db, techUsername) {
       const sql = "CALL calculateAverageReview(?)";
       try {

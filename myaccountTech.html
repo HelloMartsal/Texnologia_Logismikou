@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account - Technician</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 2em;
+      color: #333;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 2em;
+      color: #333;
+    }
+
+    .account-info {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 20px;
+      margin: 0 auto;
+      max-width: 600px;
+      background-color: #fff;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .account-info ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .account-info li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .account-label {
+      font-weight: bold;
+      width: 150px;
+      color: #333;
+    }
+
+    span {
+      display: inline-block;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    button:hover {
+      background-color: #0067cc;
+    }
+
+    #confirmation-modal {
+      display: none;
+      position: fixed; /* Stay in place when scrolling */
+      z-index: 1; /* Sit on top of other content */
+      left: 0;
+      top: 0;
+      width: 100%; /* Full width */
+      height: 100%; /* Full height */
+      overflow: auto; /* Enable scroll if needed */
+      background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    #confirmation-modal-content {
+      background-color: #fefefe;
+      margin: 15% auto; /* 15% from the top and centered */
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%; /* Some width */
+    }
+
+    .confirmation-buttons {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .confirmation-buttons button {
+      margin-left: 10px;
+    }
+
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>My Account</h1>
+  </header>
+  <main>
+    <section class="account-info">
+      <h2>Account Details</h2>
+      <ul>
+        <li>
+          <span class="account-label">Username:</span>
+          <span id="username"></span>
+        </li>
+        <li>
+          <span class="account-label">Password:</span>
+          <span id="password"></span>
+          <button onclick="editField('password')">Edit</button>
+        </li>
+        <li>
+          <span class="account-label">Name:</span>
+          <span id="name"></span>
+          <button onclick="editField('name')">Edit</button>
+        </li>
+        <li>
+          <span class="account-label">Surname:</span>
+          <span id="surname"></span>
+          <button onclick="editField('surname')">Edit</button>
+        </li>
+        <li>
+          <span class="account-label">Email:</span>
+          <span id="email"></span>
+          <button onclick="editField('email')">Edit</button>
+        </li>
+        <li>
+          <span class="account-label">Phone Number:</span>
+          <span id="phone_number"></span>
+          <button onclick="editField('phone_number')">Edit</button>
+        </li>
+        <li>
+          <span class="account-label">Address:</span>
+          <span id="address"></span>
+          <button onclick="editField('address')">Edit</button>
+        </li>
+        <li>
+          <span class="account-label">Specialty:</span>
+          <span id="specialty_name"></span>
+          <button onclick="editField('specialty_name')">Edit</button>
+        </li>
+        <li>
+          <span class="account-label">Years of experience:</span>
+          <span id="experience_years"></span>
+          <button onclick="editField('experience_years')">Edit</button>
+        </li>
+      </ul>
+      <div id="confirmation-modal">
+        <div id="confirmation-modal-content">
+          <p>Are you sure you want to change your <span id="confirm-field-label"></span> from <span id="old-value"></span> to <span id="new-value"></span>?</p>
+          <div class="confirmation-buttons">
+            <button onclick="confirmChange()">Confirm</button>
+            <button onclick="closeModal()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const usernameEl = document.getElementById('username');
+    const passwordEl = document.getElementById('password');
+    const nameEl = document.getElementById('name');
+    const surnameEl = document.getElementById('surname');
+    const emailEl = document.getElementById('email');
+    const phoneNumberEl = document.getElementById('phone_number');
+    const addressEl = document.getElementById('address');
+    const specialtyNameEl = document.getElementById('specialty_name');
+    const experienceYearsEl = document.getElementById('experience_years');
+
+    function populateAccountInfo(data) {
+      // Check if data exists and has properties before accessing them
+      if (data) {
+        usernameEl.textContent = data.username;
+        passwordEl.textContent = data.password;
+        nameEl.textContent = data.name;
+        surnameEl.textContent = data.surname;
+        emailEl.textContent = data.email;
+        phoneNumberEl.textContent = data.phone_number;
+        addressEl.textContent = data.address;
+        specialtyNameEl.textContent = data.specialty_name;
+        experienceYearsEl.textContent = data.experience_years;
+      } else {
+        console.error('Error: Data is missing or invalid.');
+        // Handle the error case, for example, display an error message to the user
+      }
+    }
+
+    $(document).ready(function() {
+      $.ajax({
+        url: "/api/MyAccountTech",
+        method: "GET",
+        success: function (response) {
+          let data = response.data;
+          populateAccountInfo(data);
+        },
+        error: function (error) {
+          console.error("Error fetching data:", error);
+          // Handle error, e.g., display an error message to the user
+        }
+      });
+    });
+
+
+
+    function editField(fieldName) {
+      const fieldSpan = document.getElementById(fieldName);
+      const fieldInput = document.createElement('input');
+      fieldInput.type = 'text';
+      fieldInput.value = fieldSpan.textContent;
+
+      fieldSpan.parentNode.replaceChild(fieldInput, fieldSpan);
+      fieldInput.focus(); 
+    
+      fieldInput.addEventListener('keydown', function(event) {
+        if (event.keyCode === 13) { 
+            const newField = event.target.value;
+            const oldField = fieldSpan.textContent;
+          // Display confirmation modal
+          document.getElementById('confirmation-modal').style.display = 'block';
+          document.getElementById('confirm-field-label').textContent = fieldName;
+          document.getElementById('old-value').textContent = oldField;
+          document.getElementById('new-value').textContent = newField;
+        }
+      });
+    }
+
+    function confirmChange() {
+      const fieldName = document.getElementById('confirm-field-label').textContent;
+      const newValue = document.getElementById('new-value').textContent;
+
+      // Call updateAccount function with confirmed new value
+      updateAccount(fieldName, newValue);
+
+      // Close confirmation modal after confirmation
+      closeModal();
+      window.location.reload();
+    }
+
+    function closeModal() {
+      document.getElementById('confirmation-modal').style.display = 'none';
+      window.location.reload();
+    }
+
+    function updateAccount(fieldName, newValue) {
+        $.ajax({
+            url: "/api/UpdateAccountTech", 
+            method: "POST",
+            data: {
+            field: fieldName,
+            value: newValue
+            },
+            success: function (response) {
+            if (response.success) {
+                console.log("Account updated successfully!");
+                const spanToUpdate = document.getElementById(fieldName);
+                spanToUpdate.textContent = newValue; // Update span content with new value
+            } else {
+                console.error("Error updating account:", response.error);
+                // Handle update error, e.g., display an error message
+            }
+            },
+            error: function (error) {
+            console.error("Error updating account:", error);
+            // Handle error, e.g., display an error message
+            }
+        });
+    }
+    
+  </script>
+</body>
+</html>
