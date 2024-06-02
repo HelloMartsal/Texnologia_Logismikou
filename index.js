@@ -16,7 +16,6 @@ import Notifications from "./Classes/notification.js";
 import Offers from "./Classes/offer.js";
 import Payment from "./Classes/payment.js";
 import Account from "./Classes/account.js";
-import { type } from "os";
 
 
 
@@ -225,7 +224,7 @@ app.get('/user', isAuthenticated, isUser, isLogged,populateUser, (req, res) => {
 
 app.get('/tech', isAuthenticated, isTech, isLogged, populateTech, (req, res) => {
   
-  res.sendFile(__dirname + '/main_page.html');
+  res.sendFile(__dirname + '/main_page_tech.html');
 });
 
 app.get('/admin', isAuthenticated, isAdmin, isLogged, (req, res) => {
@@ -257,8 +256,6 @@ let cachedTechs = null;
 app.post('/api/techs', isAuthenticated, isUser, isLogged, async (req, res) => {
   if(req.body.called){
     const { priceRange, reviewRange, specialities, services } = req.body;
-    req.session.specialities = specialities;
-    req.session.services = services;
     const filterdTechs = await Tech.filterTechs(specialities, services, reviewRange, priceRange,cachedTechs);
     res.json({ data: filterdTechs });
   }else {
@@ -279,7 +276,7 @@ app.get('/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
 
 app.get('/api/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
   try {
-    const bookings = await Reservations.getBookingHistory(db,user.username);
+    const bookings = await Reservations.getUserBookingHistory(db,user.username);
     res.json({ data: bookings });
   } catch (err) {
     console.error("Error fetching booking history:", err);
@@ -293,7 +290,7 @@ app.get('/calendar', isAuthenticated, isTech, isLogged, async (req, res) => {
 
 app.get('/api/calendar', isAuthenticated, isTech, isLogged, async (req, res) => {
   try {
-    const availabity =await tech.getAvailability(db);
+    const availabity =await tech.getAvailabity(db);
     res.json({ data: availabity });
   } catch (err) {
     console.error("Error fetching calendar:", err);
@@ -312,8 +309,8 @@ app.post('/api/calendar', isAuthenticated, isTech, isLogged, async (req, res) =>
 
 app.get('/tech/:username', isAuthenticated, isUser, isLogged, async (req, res) => {
   const techId = req.params.username;
-  req.session.techId = techId;
-  res.sendFile(__dirname + '/tech_reserv.html');
+  //res.sendFile(__dirname + '/tech_profile.html');
+  res.sendFile(__dirname + '/find_tech.html');
 
 });
 
@@ -333,91 +330,158 @@ app.get("/user/accountinfo", (req, res) => {
   res.json({ field, value });
 });
 
+app.get('/techbooking', isAuthenticated, isTech, isLogged, async (req, res) => {
+  res.sendFile(__dirname + '/techbooking.html');
+});
 
-
-app.get('/api/tech_calendar', isAuthenticated, isUser, isLogged, async (req, res) => {
+app.get('/api/techbooking', isAuthenticated, isTech, isLogged, async (req, res) => {
   try {
-    const tech = await Tech.createTech(db,req.session.techId);
-    const availabity =await tech.getAvailability(db);
-    res.json({ data: availabity });
+    const bookings = await Reservations.getTechBookingHistory(db,tech.username);
+    res.json({ data: bookings });
   } catch (err) {
-    console.error("Error fetching calendar:", err);
+    console.error("Error fetching booking history:", err);
     res.status(500).send("Error occurred");
   }
 });
 
-app.post('/api/tech_reserv', isAuthenticated, isUser, isLogged, async (req, res) => {
-  const { start,end,selectedOption,enteredText } = req.body;
-  const tech = await Tech.createTech(db,req.session.techId);
-  const specialities = req.session.specialities;
-  const services = req.session.services;
-
-  try {
-    const message = await Reservations.makeReservation(db, user.username, tech.username,tech.specialty,services, start, end,selectedOption,enteredText);
-    res.json({ message });
-  } catch (err) {
-    console.error("Error making reservation:", err);
-    res.status(500).send("Error occurred");
+app.post('/api/create-notification', async (req, res) => {
+  const { userUsername, explanation, price, date } = req.body;
+  // Validate notification data
+  if (!userUsername || !explanation || !price || !date) {
+    return res.status(400).json({ error: 'Missing required fields' });
   }
-});
 
-app.post('/api/tech_serv/update', isAuthenticated, isUser, isLogged, async (req, res) => {
-  const events = req.body;
+  if (isNaN(price)) {
+    return res.status(400).json({ error: 'Invalid price format' });
+  }
 
   try {
-    const tech = await Tech.createTech(db,req.session.techId);
-    await tech.setAvailability(db, events);
-  } catch (err) {
-    console.error("Error setting availability:", err);
-    res.status(500).send("Error occurred");
+    // Create notification record in the database
+    const sql = 'INSERT INTO NotificBill (userUsername, techUsername, explanation, price, date) VALUES (?, ?, ?, ?, ?)';
+    const values = [userUsername, tech.username, explanation, price, date];
+    await db.query(sql, values);
+
+    // Send notification (optional)
+    // ... (code to send notification to customer and/or technician)
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    res.status(500).json({ error: 'Failed to create notification' });
   }
 });
 
-app.get('/change_reserv/:id', isAuthenticated, isUser, isLogged, async (req, res) => {
-  const id = req.params.id;
-  req.session.resId = id;
-  res.sendFile(__dirname + '/change_reserv.html');
+app.post('/check-notifications', isAuthenticated, isUser, isLogged, populateUser, (req, res) => {
+  const username = user.username;
+
+  // Use the database connection pool to query for notifications
+  db.query(`SELECT * FROM NotificBill WHERE userUsername = '${username}' AND flag = 1`, (err, rows) => {
+    if (err) {
+      console.error('Error checking notifications:', err);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    const hasNotification = rows.length > 0;
+    res.json({ status: hasNotification ? 'notification present' : 'no notification' });
+  });
 });
 
-app.get('/api/reserv_calendar', isAuthenticated, isUser, isLogged, async (req, res) => {
-  const id = req.session.resId;
+app.get('/MyAccountTech', isAuthenticated, isTech, isLogged, populateTech, async (req, res) => {
+  res.sendFile(__dirname + '/myaccountTech.html');
+});
+
+app.get('/api/MyAccountTech', isAuthenticated, isTech, isLogged, populateTech, async (req, res) => {
   try {
-    const reserv = await Reservations.getReservation(db,id);
-    req.session.techId = reserv.resTechUsername;
-    const tech = await Tech.createTech(db,reserv.resTechUsername);
-    const availabity =await tech.getAvailability(db);
-    res.json({ data: availabity });
+    const TechAccInfo = await Account.getTechAccInfo(db,tech.username);
+    res.json({ data: TechAccInfo });
   } catch (err) {
-    console.error("Error fetching reservation:", err);
+    console.error("Error fetching Technician's Account Info:", err);
     res.status(500).send("Error occurred");
   }
 });
 
-app.get('/api/reserv_info', isAuthenticated, isUser, isLogged, async (req, res) => {
-  const id = req.session.resId;
+app.post('/api/UpdateAccountTech', async (req, res) => {
+    const { field, value } = req.body; 
+
+      // Update logic based on field name
+      if (field === 'specialty_name') {
+        try {
+          // Find specialty ID based on current specialty value
+          const currentSpecialty = await db.query('SELECT specialty FROM tech WHERE username_t = ?', [tech.username]);
+          const specialtyId = currentSpecialty[0].specialty;
+    
+          // Update specialty table with new name
+          const updateSpecialtyQuery = `UPDATE specialty SET name = ? WHERE id_spec = ?`;
+          await db.query(updateSpecialtyQuery, [value, specialtyId]);
+    
+          res.json({ success: true }); // Respond with success
+        } catch (error) {
+          console.error("Error updating specialty:", error);
+          res.status(500).json({ error: "Error updating account" });
+        }
+      } else {
+        // Handle other update logic
+        let updateTable = 'account';
+        let usernameColumn = 'username';
+    
+        if (field === 'experience_years') {
+          updateTable = 'tech';
+          usernameColumn = 'username_t';
+        }
+    
+        const updateQuery = `UPDATE ${updateTable} SET ${field} = ? WHERE ${usernameColumn} = ?`;
+
+    try {
+      const [rows, fields] = await db.query(updateQuery, [value, tech.username]);
+      if (rows.affectedRows === 1) {
+        res.json({ success: true }); 
+      } else {
+        console.error("Unexpected update result:", rows);
+        res.status(500).json({ error: "Error updating account" });
+      }
+    } catch (error) {
+      console.error("Error updating account:", error);
+      res.status(500).json({ error: "Error updating account" });
+    }
+  }
+});
+
+
+app.post('/api/reviews', isAuthenticated, isUser, isLogged, async (req, res) => {
+  const { reviewText, reviewScore } = req.body;
+  const userUsername = req.session.userId; 
+   
   try {
-    const reserv = await Reservations.getReservation(db,id);
-    await reserv.deleteReservation(db);
-    res.json({reserv});
+    const query = 'SELECT ResTechUsername FROM reservation WHERE ResUserUsername = ?';
+    db.query(query, [userUsername], (err, results) => {
+      if (err) {
+        console.error('Error fetching tech username:', err);
+        res.status(500).send('Error fetching tech username');
+        return;
+      }
+
+      if (results.length > 0) {
+        const techUsername = results[0].ResTechUsername;
+
+        const sql = 'INSERT INTO review (ReviewText, ReviewUserUsername, ReviewTechUsername, ReviewDate, ReviewScore) VALUES (?, ?, ?, ?, ?)';
+        db.query(sql, [reviewText, userUsername, techUsername, new Date().toISOString().split('T')[0], reviewScore], (err, result) => {
+          if (err) {
+            console.error('Error inserting review:', err);
+            res.status(500).send('Error submitting review');
+            return;
+          }
+
+          res.status(200).send('Review submitted successfully');
+        });
+      } else {
+        res.status(404).send('No tech found for the user');
+      }
+    });
   } catch (err) {
-    console.error("Error fetching reservation:", err);
-    res.status(500).send("Error occurred");
+    console.error('Error:', err);
+    res.status(500).send('Server Error');
   }
 });
-
-app.post('/api/change_reserv', isAuthenticated, isUser, isLogged, async (req, res) => {
-  const id = req.session.resId;
-  try{
-    const reserv = await Reservations.getReservation(db,id);
-    const message = await Reservations.makeReservation(db, reserv.resUserUsername, reserv.resTechUsername,reserv.ResSpecialty,reserv.resService, req.body.start, req.body.end,req.body.selectedOption,req.body.enteredText);
-    res.json({ message });
-  
-  } catch (err) {
-    console.error("Error changing reservation:", err);
-    res.status(500).send("Error occurred");
-  }
-});
-
 // ===============================================================================================================
 
 
