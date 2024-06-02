@@ -1,17 +1,17 @@
 class Reservations {
-    constructor(ResID, ResUserUsername, ResTechUsername, ResSpecialty, ResService, ResStatus, ResStartDate, ResEndDate) {
+    constructor(ResID, ResUserUsername, ResTechUsername, ResSpecialty, ResService, ResStatus, ResDate, ResTime) {
       this.resId = ResID;
       this.resUserUsername = ResUserUsername;
       this.resTechUsername = ResTechUsername;
       this.ResSpecialty = ResSpecialty;
       this.resService = ResService;
       this.resStatus = ResStatus;
-      this.resStartDate = ResStartDate;
-      this.resEndDate = ResEndDate;
+      this.resDate = ResDate;
+      this.resTime = ResTime;
     }
   
-    static async getBookingHistory(db, username) {
-      const sql = "CALL getBookingHistory(?)";
+    static async getUserBookingHistory(db, username) {
+      const sql = "CALL getUserBookingHistory(?)";
       try {
         const results = await db.query(sql, [username]);
         return results[0];
@@ -21,14 +21,13 @@ class Reservations {
       }
     }
 
-    static async makeReservation(db, username, techUsername, specialty, service, startDate, endDate) {
-      const sql = "CALL createReservation(?,?,?,?,?,?)";
-      console.log(username, techUsername, specialty, service, startDate, endDate);
+    static async getTechBookingHistory(db, username) {
+      const sql = "CALL getTechBookingHistory(?)";
       try {
-        const results = await db.query(sql, [username, techUsername, specialty, service, startDate, endDate]);
-        return results
+        const results = await db.query(sql, [username]);
+        return results[0];
       } catch (err) {
-        console.error("Error making reservation:", err);
+        console.error("Error fetching booking history:", err);
         return null;
       }
     }
