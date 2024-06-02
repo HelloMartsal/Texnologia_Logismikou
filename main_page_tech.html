@@ -5,68 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Main Page</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
-    <style>
-      .navbar-nav .nav-item {
-        margin-right: 15px;
-      }
-  
-/* Custom Envelope Notification Icon using CSS shapes */
-.notification-icon {
-position: relative;
-cursor: pointer;
-color: white;
-}
-
-.notification-icon i {
-font-size: 20px;
-left: 50px;
-}
-
-.notification-icon:before {
-content: "";
-display: block;
-width: 15px;
-height: 20px;
-background-color: rgb(80, 76, 76); /* Top left corner of envelope (red) */
-border-radius: 5px 0 0 5px; /* Top corners rounded */
-position: absolute;
-top: 0;
-left: 0;
-}
-
-.notification-icon:after {
-content: "";
-display: block;
-width: 15px;
-height: 20px;
-background-color: rgb(216, 59, 59); /* Top right corner of envelope (darker red) */
-border-radius: 0 5px 5px 0; /* Top corners rounded */
-position: absolute;
-top: 0;
-left: 15px;
-right: 0;
-}
-
-.notification-count {
-position: absolute;
-top: -5px;
-right: -5px;
-width: 18px;
-height: 18px;
-border-radius: 50%;
-background-color: red;
-color: white;
-font-size: 12px;
-text-align: center;
-line-height: 18px;
-display: none; /* Initially hide the count */
-}
-
-.notification-icon.has-notification .notification-count {
-display: block; /* Show the count when there are notifications */
-left: 20px;
-}
-    </style>
 </head>
 <body>
 <!-- Top Bar -->
@@ -81,22 +19,19 @@ left: 20px;
                 <a class="nav-link" href="">Home</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/find_tech">Find Tech</a>
+                <a class="nav-link" href="/MyAccountTech">MyAccount</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/booking">Booking History</a>
+                <a class="nav-link" href="/techbooking">Booking History</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/user/account">Account Details</a>
+                <a class="nav-link" href="/calendar">Calendar</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/logout">Logout</a>
             </li>
-            <li class="nav-item">
-              <span class="notification-icon" id="notificationIcon">
-                <span class="notification-count" id="notificationCount"></span>
-              </span>
-            </li>
+            <!-- Add more options as needed -->
+            
         </ul>
     </div>
 </nav>
@@ -140,33 +75,5 @@ left: 20px;
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
-    <script>
-        $(document).ready(function() {
-          const notificationIcon = $('#notificationIcon');
-          const notificationCount = $('#notificationCount');
-    
-          // Make AJAX request to check for notifications
-          $.ajax({
-            url: '/check-notifications', // Replace with your actual server endpoint URL
-            method: 'POST',
-            success: function(response) {
-              if (response.status === 'notification present') {
-                notificationIcon.addClass('has-notification');
-                notificationCount.text(response.count || '!'); // Display notification count (default to 1)
-              }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-              console.error('Error checking notifications:', textStatus, errorThrown);
-              // Handle potential errors during the AJAX request (optional)
-            }
-          });
-    
-          // Add your logic to handle notification click (optional)
-          notificationIcon.click(function() {
-            // Open notification panel or redirect to notifications page
-            // Example: window.location.href = "/notifications";
-          });
-        });
-      </script>
 </body>
 </html>
