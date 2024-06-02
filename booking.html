@@ -199,6 +199,7 @@ h1 {
                 html += `    <div class="card__content">`;
 
                 html += `      <h3>Booking ID: ${booking.ResID}</h3>`;
+                var bookingid = booking.ResID;
 
                 let statusColor = "";
                 switch (booking.ResStatus) {
@@ -240,7 +241,10 @@ h1 {
             }
 
             $("#booking-history").html(html);
-
+            $(".issue-bill-button").on("click", function() {
+              const bookingId = $(this).data("booking-id");
+              window.location.href = `/change_reserv/${bookingId}`;
+            });
             // Προσθήκη event listeners στα κουμπιά "Review"
             $(".reviewBtn").on("click", function() {
               selectedReservationId = $(this).data("id");

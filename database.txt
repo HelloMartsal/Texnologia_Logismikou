@@ -1,0 +1,533 @@
+create table if not exists account
+(
+	username varchar(255) not null
+		primary key,
+	password varchar(255) not null,
+	name varchar(255) not null,
+	surname varchar(255) not null,
+	address varchar(255) not null,
+	phone_number varchar(255) not null,
+	email varchar(255) not null,
+	date date not null
+);
+
+create table if not exists admin
+(
+	id_adm int auto_increment
+		primary key,
+	username_a varchar(255) not null,
+	constraint admin_ibfk_1
+		foreign key (username_a) references account (username)
+			on update cascade on delete cascade
+);
+
+create index username_a
+	on admin (username_a);
+
+create table if not exists log
+(
+	id int auto_increment
+		primary key,
+	username varchar(255) not null
+);
+
+create table if not exists notification
+(
+	NotificationID int auto_increment
+		primary key,
+	NotificationText text not null,
+	NotificationSender varchar(255) not null,
+	NotificationReceiver varchar(255) not null,
+	NotificationDate datetime not null,
+	constraint notification_ibfk_1
+		foreign key (NotificationSender) references account (username)
+			on update cascade on delete cascade,
+	constraint notification_ibfk_2
+		foreign key (NotificationReceiver) references account (username)
+			on update cascade on delete cascade
+);
+
+create index NotificationReceiver
+	on notification (NotificationReceiver);
+
+create index NotificationSender
+	on notification (NotificationSender);
+
+create table if not exists offer
+(
+	id_offer int auto_increment
+		primary key,
+	off_type enum('client', 'tech') not null,
+	off_desc varchar(255) not null,
+	off_start_date date not null,
+	off_end_date date not null,
+	off_price int not null
+);
+
+create table if not exists specialty
+(
+	id_spec int auto_increment
+		primary key,
+	name varchar(255) not null
+);
+
+create table if not exists service
+(
+	id_serv int auto_increment
+		primary key,
+	name varchar(255) not null,
+	descr varchar(255) not null,
+	specialty_id int not null,
+	constraint service_ibfk_1
+		foreign key (specialty_id) references specialty (id_spec)
+			on update cascade on delete cascade
+);
+
+create index specialty_id
+	on service (specialty_id);
+
+create table if not exists tech
+(
+	id_tech int auto_increment
+		primary key,
+	username_t varchar(255) not null,
+	specialty int not null,
+	experience_years int not null,
+	LaborCost float not null,
+	availability mediumtext not null,
+	constraint tech_ibfk_1
+		foreign key (username_t) references account (username)
+			on update cascade on delete cascade,
+	constraint tech_ibfk_2
+		foreign key (specialty) references specialty (id_spec)
+			on update cascade on delete cascade
+);
+
+create table if not exists serv_tech
+(
+	id_serv int null,
+	id_tech int null,
+	constraint id_tech
+		foreign key (id_tech) references tech (id_tech)
+			on update cascade on delete cascade,
+	constraint serv_tech_ibfk_1
+		foreign key (id_serv) references service (id_serv)
+			on update cascade on delete cascade
+);
+
+create index id_serv
+	on serv_tech (id_serv);
+
+create table if not exists subscription
+(
+	id_sub int auto_increment
+		primary key,
+	sub_cost float not null,
+	sub_name varchar(255) not null,
+	sub_plan varchar(255) not null,
+	sub_start_date date not null,
+	sub_end_date date not null,
+	sub_status enum('active', 'inactive') not null,
+	id_tech int null,
+	constraint subscription_ibfk_1
+		foreign key (id_tech) references tech (id_tech)
+			on update cascade on delete cascade
+);
+
+create index id_tech
+	on subscription (id_tech);
+
+create index specialty
+	on tech (specialty);
+
+create index username_t
+	on tech (username_t);
+
+create table if not exists user
+(
+	id_us int auto_increment
+		primary key,
+	username_u varchar(255) not null,
+	constraint user_ibfk_1
+		foreign key (username_u) references account (username)
+			on update cascade on delete cascade
+);
+
+create table if not exists bill
+(
+	BillID int auto_increment
+		primary key,
+	BillAmount float not null,
+	BillUserUsername varchar(255) not null,
+	BillTechUsername varchar(255) not null,
+	BillService int not null,
+	BillDatetime datetime not null,
+	constraint bill_ibfk_1
+		foreign key (BillUserUsername) references user (username_u)
+			on update cascade on delete cascade,
+	constraint bill_ibfk_2
+		foreign key (BillTechUsername) references tech (username_t)
+			on update cascade on delete cascade,
+	constraint bill_ibfk_3
+		foreign key (BillService) references service (id_serv)
+			on update cascade on delete cascade
+);
+
+create index BillService
+	on bill (BillService);
+
+create index BillTechUsername
+	on bill (BillTechUsername);
+
+create index BillUserUsername
+	on bill (BillUserUsername);
+
+create table if not exists notificbill
+(
+	notificBillID int auto_increment
+		primary key,
+	userUsername varchar(255) not null,
+	techUsername varchar(255) not null,
+	explanation text not null,
+	price int not null,
+	date date not null,
+	flag tinyint(1) default 1 not null,
+	constraint notificbill_ibfk_1
+		foreign key (userUsername) references user (username_u),
+	constraint notificbill_ibfk_2
+		foreign key (techUsername) references tech (username_t)
+);
+
+create index techUsername
+	on notificbill (techUsername);
+
+create index userUsername
+	on notificbill (userUsername);
+
+create table if not exists payment
+(
+	PaymentID int auto_increment
+		primary key,
+	PaymentAmount float not null,
+	PaymentUserUsername varchar(255) not null,
+	PaymentTechUsername varchar(255) not null,
+	PaymentMethod enum('Card', 'Cash') not null,
+	PaymentDate date not null,
+	PaymentTime time not null,
+	constraint payment_ibfk_1
+		foreign key (PaymentUserUsername) references user (username_u)
+			on update cascade on delete cascade,
+	constraint payment_ibfk_2
+		foreign key (PaymentTechUsername) references tech (username_t)
+			on update cascade on delete cascade
+);
+
+create index PaymentTechUsername
+	on payment (PaymentTechUsername);
+
+create index PaymentUserUsername
+	on payment (PaymentUserUsername);
+
+create table if not exists reservation
+(
+	ResID int auto_increment
+		primary key,
+	ResUserUsername varchar(255) not null,
+	ResTechUsername varchar(255) not null,
+	ResSpecialty int not null,
+	ResService int not null,
+	ResStatus enum('Pending', 'Cancelled', 'Done') not null,
+	ResStartDate text not null,
+	ResEndDate text not null,
+	com_meth enum('Phone', 'Chat') not null,
+	Res_desc text not null,
+	constraint reservation_ibfk_1
+		foreign key (ResUserUsername) references user (username_u)
+			on update cascade on delete cascade,
+	constraint reservation_ibfk_2
+		foreign key (ResTechUsername) references tech (username_t)
+			on update cascade on delete cascade,
+	constraint reservation_ibfk_3
+		foreign key (ResSpecialty) references specialty (id_spec)
+			on update cascade on delete cascade,
+	constraint reservation_ibfk_4
+		foreign key (ResService) references service (id_serv)
+			on update cascade on delete cascade
+);
+
+create index ResService
+	on reservation (ResService);
+
+create index ResSpecialty
+	on reservation (ResSpecialty);
+
+create index ResTechUsername
+	on reservation (ResTechUsername);
+
+create index ResUserUsername
+	on reservation (ResUserUsername);
+
+create table if not exists review
+(
+	ReviewID int auto_increment
+		primary key,
+	ReviewText text not null,
+	ReviewUserUsername varchar(255) not null,
+	ReviewTechUsername varchar(255) not null,
+	ReviewDate date not null,
+	ReviewScore int not null,
+	constraint review_ibfk_1
+		foreign key (ReviewUserUsername) references user (username_u)
+			on update cascade on delete cascade,
+	constraint review_ibfk_2
+		foreign key (ReviewTechUsername) references tech (username_t)
+			on update cascade on delete cascade
+);
+
+create index ReviewTechUsername
+	on review (ReviewTechUsername);
+
+create index ReviewUserUsername
+	on review (ReviewUserUsername);
+
+create index username_u
+	on user (username_u);
+
+create procedure addAccount(IN usern varchar(255), IN password varchar(255), IN phone_number varchar(255), IN name varchar(255), IN surname varchar(255), IN address varchar(255), IN email varchar(255), IN date date)
+BEGIN
+    DECLARE user_exists INT;
+
+     SELECT COUNT(*) INTO user_exists
+        FROM account
+        WHERE username = usern ;
+
+
+    IF user_exists > 0 THEN
+
+         SELECT 'The username already exists please try another one' AS message;
+      ELSE
+
+        INSERT INTO account (username, password, phone_number, name, surname, address, email, date) VALUES (usern, password, phone_number, name, surname, address, email, date);
+        SELECT 'Account submitted successfully' AS message;
+        INSERT INTO user VALUES (NULL, usern);
+    END IF;
+END;
+
+create procedure calculateAverageReview(IN tech_username varchar(255))
+BEGIN
+    DECLARE avg_review FLOAT;
+
+    SELECT AVG(ReviewScore)
+    INTO avg_review
+    FROM review
+    WHERE ReviewTechUsername = tech_username;
+
+    SELECT avg_review AS AverageReview;
+END;
+
+create procedure createReservation(IN usern varchar(255), IN usert varchar(255), IN specialty int, IN service int, IN startdate text, IN enddate text, IN com enum('Phone', 'Chat'), IN comtext text)
+BEGIN
+    INSERT INTO reservation (ResUserUsername, ResTechUsername, ResService, ResSpecialty, ResStartDate, ResEndDate,com_meth,Res_desc)
+    VALUES (usern, usert, service, specialty, startdate, enddate,com,comtext);
+END;
+
+create procedure getAllServices()
+BEGIN
+    SELECT *
+    FROM service;
+END;
+
+create procedure getAllSpecialties()
+BEGIN
+    SELECT *
+    FROM specialty;
+END;
+
+create procedure getAllTechs()
+BEGIN
+    SELECT a.*, t.*, GROUP_CONCAT(st.id_serv) AS services
+    FROM account AS a
+    INNER JOIN tech AS t ON a.username = t.username_t
+    LEFT JOIN serv_tech AS st ON t.id_tech = st.id_tech
+    GROUP BY a.username, t.id_tech, t.username_t, st.id_serv;
+END;
+
+create procedure getAvailability(IN tech_username varchar(255))
+BEGIN
+    SELECT availability
+    FROM tech
+    WHERE username_t = tech_username;
+END;
+
+create procedure getBookingHistory(IN usern varchar(255))
+BEGIN
+    SELECT r.ResID, s.name AS service_name, sp.name AS specialty_name, a.name, a.surname, r.ResStartDate, r.ResEndDate
+    FROM reservation AS r
+    INNER JOIN service AS s ON r.ResService = s.id_serv
+    INNER JOIN specialty AS sp ON r.ResSpecialty = sp.id_spec
+    INNER JOIN tech AS t ON r.ResTechUsername = t.username_t
+    INNER JOIN account AS a ON t.username_t = a.username
+    WHERE r.ResUserUsername = usern;
+END;
+
+create procedure getId(IN name varchar(255), IN passwd varchar(255))
+BEGIN
+    DECLARE user_id VARCHAR(255);
+
+
+    SELECT username
+    INTO user_id
+    FROM account
+    WHERE name=username ;
+
+    SELECT user_id AS userId;
+
+
+
+
+END;
+
+create procedure getTechAccInfo(IN usern varchar(255))
+BEGIN
+  SELECT
+    a.username, a.password, a.name, a.surname, a.phone_number, a.address, a.email,
+    t.experience_years,
+    s.name AS specialty_name
+  FROM account a
+  INNER JOIN tech t ON a.username = t.username_t
+  INNER JOIN specialty s ON t.specialty = s.id_spec
+  WHERE a.username = usern;
+END;
+
+create procedure getTechBookingHistory(IN usern varchar(255))
+BEGIN
+  SELECT r.ResID, a.username, a.name, a.surname, r.ResStartDate, r.ResStatus
+  FROM reservation AS r
+  INNER JOIN user AS u ON r.ResUserUsername = u.username_u
+  INNER JOIN account AS a ON u.username_u = a.username
+  WHERE r.ResTechUsername = usern
+  ORDER BY CASE r.ResStatus
+           WHEN 'Pending' THEN 1
+           WHEN 'Done' THEN 2
+           WHEN 'Cancelled' THEN 3
+           ELSE 4 -- Add a default value to handle unexpected statuses
+          END,
+          r.ResStartDate; -- Order by status first, then date and time
+END;
+
+create procedure getTechByUsername(IN usern varchar(255))
+BEGIN
+    SELECT a.*, t.*, GROUP_CONCAT(st.id_serv) AS services
+    FROM account AS a
+    INNER JOIN tech AS t ON a.username = t.username_t
+    LEFT JOIN serv_tech AS st ON t.id_tech = st.id_tech
+    WHERE t.username_t = usern
+    GROUP BY a.username, t.id_tech, t.username_t, st.id_serv;
+END;
+
+create procedure getUserBookingHistory(IN usern varchar(255))
+BEGIN
+  SELECT r.ResID, s.name AS service_name, sp.name AS specialty_name, a.name, a.surname, r.ResStartDate, r.ResStatus,a.username
+  FROM reservation AS r
+  INNER JOIN service AS s ON r.ResService = s.id_serv
+  INNER JOIN specialty AS sp ON r.ResSpecialty = sp.id_spec
+  INNER JOIN tech AS t ON r.ResTechUsername = t.username_t
+  INNER JOIN account AS a ON t.username_t = a.username
+  WHERE r.ResUserUsername = usern
+  ORDER BY CASE r.ResStatus
+           WHEN 'Pending' THEN 1
+           WHEN 'Done' THEN 2
+           WHEN 'Cancelled' THEN 3
+           ELSE 4 -- Add a default value to handle unexpected statuses
+          END,
+          r.ResStartDate; -- Order by status first, then date and time
+END;
+
+create procedure getUserByUsername(IN usern varchar(255))
+BEGIN
+    SELECT a.*, u.*
+    FROM account AS a
+    INNER JOIN user AS u ON a.username = u.username_u
+    WHERE u.username_u = usern;
+END;
+
+create procedure getUserInfo(IN usern varchar(255))
+BEGIN
+
+
+
+    SELECT *
+    FROM account INNER JOIN user U on account.username = U.username_u WHERE usern=username;
+
+
+
+
+
+
+END;
+
+create procedure login(IN username varchar(255), IN passwd varchar(255))
+BEGIN
+    DECLARE user_exists INT;
+
+
+
+    SELECT COUNT(*) INTO user_exists
+    FROM account INNER JOIN admin A on account.username = A.username_a
+    WHERE username_a = username AND password=passwd ;
+
+    IF user_exists > 0 THEN
+        -- Transfer data from admin to log
+        INSERT INTO log (username)
+        SELECT username_a
+        FROM admin
+        WHERE username_a = username;
+
+        SELECT 'Data transferred from admin successfully.' AS message;
+
+    ELSE
+
+       SELECT COUNT(*) INTO user_exists
+    FROM account INNER JOIN user A on account.username = A.username_u
+    WHERE username_u = username AND password=passwd ;
+
+
+        IF user_exists > 0 THEN
+            -- Transfer data from citizen to log
+            INSERT INTO log (username)
+            SELECT username_u
+            FROM user
+            WHERE username_u = username ;
+
+            SELECT 'Data transferred from user successfully.' AS message;
+
+        ELSE
+
+           SELECT COUNT(*) INTO user_exists
+    FROM account INNER JOIN tech A on account.username = A.username_t
+    WHERE username_t = username AND password=passwd ;
+
+
+            IF user_exists > 0 THEN
+                -- Transfer data from source_table3 to destination_table
+                INSERT INTO log (username)
+                SELECT username_t
+                FROM tech
+                WHERE username_t = username ;
+
+                SELECT 'Data transferred from tech successfully.' AS message;
+
+            ELSE
+                SELECT 'Entity does not exist in any source table.' AS message;
+            END IF;
+        END IF;
+    END IF;
+END;
+
+create procedure setAvailability(IN tech_username varchar(255), IN availn text)
+BEGIN
+    UPDATE tech
+    SET availability = availn
+    WHERE username_t = tech_username;
+END;
+

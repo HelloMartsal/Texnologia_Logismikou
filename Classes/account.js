@@ -32,6 +32,7 @@ class Account {
           }
         }
       } 
+      return [message, null]
     } catch (err) {
       console.error('Error during login query:', err);
     }

@@ -189,8 +189,7 @@ function isAuthenticated(req, res, next) {
     } else if (mess[0] === 'Data transferred from tech successfully.') {
       res.redirect(`/tech`);
     } else {
-      res.send(mess[0]);
-      res.status(500).send('Error occurred during login');
+      res.redirect('/');
     }
   });
 
@@ -225,7 +224,7 @@ app.get('/user', isAuthenticated, isUser, isLogged,populateUser, (req, res) => {
 
 app.get('/tech', isAuthenticated, isTech, isLogged, populateTech, (req, res) => {
   
-  res.sendFile(__dirname + '/main_page.html');
+  res.sendFile(__dirname + '/main_page_tech.html');
 });
 
 app.get('/admin', isAuthenticated, isAdmin, isLogged, (req, res) => {
@@ -279,7 +278,7 @@ app.get('/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
 
 app.get('/api/booking', isAuthenticated, isUser, isLogged, async (req, res) => {
   try {
-    const bookings = await Reservations.getBookingHistory(db,user.username);
+    const bookings = await Reservations.getUserBookingHistory(db,user.username);
     res.json({ data: bookings });
   } catch (err) {
     console.error("Error fetching booking history:", err);
@@ -333,6 +332,92 @@ app.get("/user/accountinfo", (req, res) => {
   res.json({ field, value });
 });
 
+app.get('/techbooking', isAuthenticated, isTech, isLogged, async (req, res) => {
+  res.sendFile(__dirname + '/techbooking.html');
+});
+app.get('/api/techbooking', isAuthenticated, isTech, isLogged, async (req, res) => {
+  try {
+    const bookings = await Reservations.getTechBookingHistory(db,tech.username);
+    res.json({ data: bookings });
+  } catch (err) {
+    console.error("Error fetching booking history:", err);
+    res.status(500).send("Error occurred");
+  }
+});
+app.post('/api/create-notification', async (req, res) => {
+  const { userUsername, explanation, price, date } = req.body;
+  // Validate notification data
+  if (!userUsername || !explanation || !price || !date) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  if (isNaN(price)) {
+    return res.status(400).json({ error: 'Invalid price format' });
+  }
+
+  try {
+    // Create notification record in the database
+    const values = [userUsername, tech.username, explanation, price, date];
+    await Notification.insertNotification(db, values);
+    // Send notification (optional)
+    // ... (code to send notification to customer and/or technician)
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    res.status(500).json({ error: 'Failed to create notification' });
+  }
+});
+app.post('/check-notifications', isAuthenticated, isUser, isLogged, populateUser, async (req, res) => {
+  const username = user.username;
+  try {
+    const notifications = await Notification.getNotifications(db, username);
+    res.json({ notifications });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+app.get('/MyAccountTech', isAuthenticated, isTech, isLogged, populateTech, async (req, res) => {
+  res.sendFile(__dirname + '/myaccountTech.html');
+});
+
+app.get('/api/MyAccountTech', isAuthenticated, isTech, isLogged, populateTech, async (req, res) => {
+  try {
+    const TechAccInfo = await Account.getTechAccInfo(db,tech.username);
+    res.json({ data: TechAccInfo });
+  } catch (err) {
+    console.error("Error fetching Technician's Account Info:", err);
+    res.status(500).send("Error occurred");
+  }
+});
+app.post('/api/UpdateAccountTech', async (req, res) => {
+  const { field, value } = req.body; 
+
+  try {
+    const updated = await tech.updateTechColumn(db,field, value);
+    res.json({ updated });
+  } catch (err) {
+    console.error("Error updating Technician's Account Info:", err);
+    res.status(500).send("Error occurred");
+  }
+});
+
+
+app.post('/api/reviews', isAuthenticated, isUser, isLogged, async (req, res) => {
+const { reservationId,reviewText, reviewScore } = req.body;
+const userUsername = req.session.userId; 
+ 
+try {
+  const reserv = await Reservations.getReservation(db,reservationId);
+  Review.addReview(db, reviewText, userUsername, reserv.resTechUsername, reviewScore);
+  res.json({ message: 'Review added successfully' });  
+} catch (err) {
+  console.error('Error:', err);
+  res.status(500).send('Server Error');
+}
+});
 
 
 app.get('/api/tech_calendar', isAuthenticated, isUser, isLogged, async (req, res) => {
@@ -415,6 +500,16 @@ app.post('/api/change_reserv', isAuthenticated, isUser, isLogged, async (req, re
   } catch (err) {
     console.error("Error changing reservation:", err);
     res.status(500).send("Error occurred");
+  }
+});
+
+app.post('/user/verify', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (user.password === password && user.username === username) {
+    res.json({ success: true });
+  } else { 
+    res.json({ success: false });
   }
 });
 
