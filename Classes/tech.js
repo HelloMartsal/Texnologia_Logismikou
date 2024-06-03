@@ -11,7 +11,7 @@ class Tech extends Account {
     this.rating;
 
   }
-  
+
     static async createTech(db,username) {
         const sql = "CALL getTechByUsername(?)";
         try {
@@ -28,7 +28,7 @@ class Tech extends Account {
           return null;
         }
       }
-  
+
     static async getAllTechs(db) {
       const sql = "CALL getAllTechs()";
       try {
@@ -43,15 +43,15 @@ class Tech extends Account {
         return null;
       }
     }
-  
+
     static async filterTechs(specialty, service, ratingRange, priceRange, techs) {
       return techs.filter(tech => {
         const isSpecialtyMatch = tech.specialty == specialty;
         const isServiceIncluded = tech.services.includes(service);
         const isWithinRatingRange = tech.rating >= ratingRange[0] && tech.rating <= ratingRange[1];
         const isWithinPriceRange = tech.LaborCost >= priceRange[0] && tech.LaborCost <= priceRange[1];
-  
-    
+
+
         return isSpecialtyMatch && isServiceIncluded && isWithinRatingRange && isWithinPriceRange;
       });
     }
@@ -94,11 +94,11 @@ class Tech extends Account {
             // Find specialty ID based on current specialty value
             const currentSpecialty = await db.query('SELECT specialty FROM tech WHERE username_t = ?', [this.username]);
             const specialtyId = currentSpecialty[0].specialty;
-      
+
             // Update specialty table with new name
             const updateSpecialtyQuery = `UPDATE specialty SET name = ? WHERE id_spec = ?`;
             await db.query(updateSpecialtyQuery, [value, specialtyId]);
-      
+
             return true;
           } catch (error) {
             console.error("Error updating specialty:", error);
@@ -108,12 +108,12 @@ class Tech extends Account {
             // Handle other update logic
             let updateTable = 'account';
             let usernameColumn = 'username';
-        
+
             if (field === 'experience_years') {
               updateTable = 'tech';
               usernameColumn = 'username_t';
             }
-        
+
             const updateQuery = `UPDATE ${updateTable} SET ${field} = ? WHERE ${usernameColumn} = ?`;
 
             try {
@@ -129,7 +129,31 @@ class Tech extends Account {
             }
         }
     }
+
+
+     async getTechAccInfo(db) {
+      const sql = "CALL getTechAccInfo(?)";
+      try {
+        const results = await db.query(sql, [this.username]);
+        return results[0][0];
+      } catch (err) {
+        console.error("Error fetching Technician's Account Information:", err);
+        return null;
+      }
+    }
+
+
+    async getReviews(db) {
+      const sql = "CALL getReviews(?)";
+      try {
+        const results = await db.query(sql, [this.username]);
+        return results[0];
+      } catch (err) {
+        console.error("Error fetching Technician's Account Information:", err);
+        return null;
+      }
+    }
 }
 
-  
+
   export default Tech;
