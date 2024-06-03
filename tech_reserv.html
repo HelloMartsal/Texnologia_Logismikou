@@ -10,20 +10,38 @@
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/main.min.js'></script>
     <!-- Optional: FullCalendar locales for different languages -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/locales-all.min.js'></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            justify-content: space-between;
+            align-items: flex-start;
             height: 100vh;
             background-color: #f9f9f9;
         }
+        #info-container {
+            width: 30%;
+            margin: 20px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        #info-container h2 {
+            margin-top: 0;
+        }
+        #reviews {
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
         #calendar-container {
             width: 60%;
-            margin: auto;
+            position: relative;
+            margin: 20px;
             padding: 20px;
             background-color: #ffffff;
             border-radius: 10px;
@@ -44,44 +62,112 @@
             background-color: #45a049;
         }
         .modal {
-        display: none; 
-        position: fixed; 
-        z-index: 1; 
-        left: 0;
-        top: 0;
-        width: 100%; 
-        height: 100%; 
-        overflow: auto; 
-        background-color: rgb(0,0,0); 
-        background-color: rgba(0,0,0,0.4); 
+            display: none; 
+            position: fixed; 
+            z-index: 1; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgb(0,0,0); 
+            background-color: rgba(0,0,0,0.4); 
         }
-
-        
         .modal-content {
-        background-color: #fefefe;
-        margin: 15% auto; 
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%; 
+            background-color: #fefefe;
+            margin: 15% auto; 
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; 
         }
-
-        
         .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
         }
-
         .close:hover,
         .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
         }
+
+        .account-info {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 20px;
+      margin: 0 auto;
+      max-width: 600px;
+      background-color: #fff;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .account-info ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .account-info li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .account-label {
+      font-weight: bold;
+      width: 150px;
+      color: #333;
+    }
+
+    span {
+      display: inline-block;
+    }
     </style>
 </head>
 <body>
+
+<div id="info-container">
+    <h2>Technician's Info</h2>
+    <section class="account-info">
+        <h2>Account Details</h2>
+        <ul>
+          <li>
+            <span class="account-label">Name:</span>
+            <span id="name"></span>
+          </li>
+          <li>
+            <span class="account-label">Surname:</span>
+            <span id="surname"></span>
+          </li>
+          <li>
+            <span class="account-label">Email:</span>
+            <span id="email"></span>
+          </li>
+          <li>
+            <span class="account-label">Phone Number:</span>
+            <span id="phone_number"></span>
+          </li>
+          <li>
+            <span class="account-label">Address:</span>
+            <span id="address"></span>
+          </li>
+          <li>
+            <span class="account-label">Specialty:</span>
+            <span id="specialty_name"></span>
+          </li>
+          <li>
+            <span class="account-label">Years of experience:</span>
+            <span id="experience_years"></span>
+          </li>
+        </ul>
+      </section>
+    <h3>Reviews</h3>
+    <div id="reviews">
+    </div>
+</div>
 
 <div id="calendar-container">
     <div id='calendar'></div>
@@ -103,10 +189,76 @@
       <input type="text" id="myInput">
       <button id="myButton">Submit</button>
     </div>
-  
+
   </div>
 
 <script>
+
+
+    const nameEl = document.getElementById('name');
+    const surnameEl = document.getElementById('surname');
+    const emailEl = document.getElementById('email');
+    const phoneNumberEl = document.getElementById('phone_number');
+    const addressEl = document.getElementById('address');
+    const specialtyNameEl = document.getElementById('specialty_name');
+    const experienceYearsEl = document.getElementById('experience_years');
+
+    function populateAccountInfo(data) {
+      // Check if data exists and has properties before accessing them
+      if (data) {
+        nameEl.textContent = data.name;
+        surnameEl.textContent = data.surname;
+        emailEl.textContent = data.email;
+        phoneNumberEl.textContent = data.phone_number;
+        addressEl.textContent = data.address;
+        specialtyNameEl.textContent = data.specialty_name;
+        experienceYearsEl.textContent = data.experience_years;
+      } else {
+        console.error('Error: Data is missing or invalid.');
+        // Handle the error case, for example, display an error message to the user
+      }
+    }
+
+    function populateReviews(reviews) {
+  const reviewsContainer = document.getElementById('reviews');
+  reviewsContainer.innerHTML = ''; // Clear existing reviews
+
+  if (reviews && reviews.length > 0) {
+    reviews.forEach(review => {
+      const reviewElement = document.createElement('div');
+      reviewElement.classList.add('review'); // Add a class for styling
+
+      const scoreElement = document.createElement('span');
+      scoreElement.classList.add('review-score'); // Add a class for styling
+
+      // Adjust the logic based on your score format
+      if (review.score == 5) {
+        scoreElement.textContent = '⭐⭐⭐⭐⭐';
+      } else if (review.ReviewScore == 4) {
+        scoreElement.textContent = '⭐⭐⭐⭐';
+      } else if (review.ReviewScore == 3) {
+        scoreElement.textContent = '⭐⭐⭐';
+      } else if (review.ReviewScore == 2) {
+        scoreElement.textContent = '⭐⭐';
+      } else {
+        scoreElement.textContent = '⭐';
+      }
+
+      const contentElement = document.createElement('p');
+      contentElement.textContent = `${review.ReviewText}`;
+
+      reviewElement.appendChild(scoreElement);
+      reviewElement.appendChild(contentElement);
+
+      reviewsContainer.appendChild(reviewElement);
+    });
+  } else {
+    reviewsContainer.textContent = 'No reviews available yet.';
+  }
+}
+
+
+
 document.addEventListener('DOMContentLoaded', function(){
     var calendarElement = document.getElementById('calendar');
     var calendar;
@@ -128,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function(){
             var start = info.event.start.toLocaleString();
             var end = info.event.end.toLocaleString();
             if (confirm('Do you choose this slot?')) {
-                
+
                 console.log('You chose this slot:', start, end);
                 var modal = document.getElementById("myModal");
                 var span = document.getElementsByClassName("close")[0];
@@ -164,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     const string = JSON.stringify(events);
                     postAvailability(events);
                     modal.style.display = "none";
-                    
+
 
                 }
             }
@@ -172,12 +324,42 @@ document.addEventListener('DOMContentLoaded', function(){
         },        
     });
 
-
     calendar.render();
     fetchAvailability(calendar);
-
-
+    fetchInformation();
+    fetchReviews();
 });
+
+function fetchInformation(){
+    $.ajax({
+        url: `/techInfo/:username`,
+        method: "GET",
+        success: function (response) {
+          let data = response.data;
+          populateAccountInfo(data);
+        },
+        error: function (error) {
+          console.error("Error fetching data:", error);
+          // Handle error, e.g., display an error message to the user
+        }
+      });
+}
+
+
+function fetchReviews(){
+    $.ajax({
+        url: `/techReviews/:username`,
+        method: "GET",
+        success: function (response) {
+          let data = response.data;
+          populateReviews(data);
+        },
+        error: function (error) {
+          console.error("Error fetching data:", error);
+          // Handle error, e.g., display an error message to the user
+        }
+      });
+}
 
 function fetchAvailability(calendar) {
     fetch('/api/tech_calendar')
@@ -205,7 +387,6 @@ function fetchAvailability(calendar) {
     });
 }
 
-
 function postReservation(start, end, selectedOption, enteredText) {
     fetch('/api/tech_reserv', {
         method: 'POST',
@@ -230,6 +411,7 @@ function postReservation(start, end, selectedOption, enteredText) {
         console.error('Error saving reservation:', error);
     });
 }
+
 function postAvailability(events) {
     fetch('/api/tech_serv/update', {
         method: 'POST',
@@ -249,6 +431,9 @@ function postAvailability(events) {
         console.error('Error saving availability:', error);
     });
 }
+
+
+
 
 </script>
 </body>

@@ -309,12 +309,45 @@ app.post('/api/calendar', isAuthenticated, isTech, isLogged, async (req, res) =>
   }
 });
 
+app.get('/api/tech_calendar', isAuthenticated, isUser, isLogged, async (req, res) => {
+  try {
+    const tech = await Tech.createTech(db,req.session.techId);
+    const availabity =await tech.getAvailability(db);
+    res.json({ data: availabity });
+  } catch (err) {
+    console.error("Error fetching calendar:", err);
+    res.status(500).send("Error occurred");
+  }
+});
 app.get('/tech/:username', isAuthenticated, isUser, isLogged, async (req, res) => {
   const techId = req.params.username;
   req.session.techId = techId;
   res.sendFile(__dirname + '/tech_reserv.html');
-
 });
+
+app.get('/techInfo/:username', isAuthenticated, isUser, isLogged, async (req, res) => {
+  try {
+    const tech = await Tech.createTech(db,req.session.techId);
+    const TechAccInfo = await tech.getTechAccInfo(db);
+    res.json({ data: TechAccInfo });
+  } catch (err) {
+    console.error("Error fetching Technician's Account Info:", err);
+    res.status(500).send("Error occurred");
+  }
+});
+
+app.get('/techReviews/:username', isAuthenticated, isUser, isLogged, async (req, res) => {
+  try {
+    const tech = await Tech.createTech(db,req.session.techId);
+    const TechAccInfo = await tech.getReviews(db);
+    console.log(TechAccInfo);
+    res.json({ data: TechAccInfo });
+  } catch (err) {
+    console.error("Error fetching Technician's Account Info:", err);
+    res.status(500).send("Error occurred");
+  }
+});
+
 
 app.get("/user/account", isAuthenticated, isUser, isLogged, async (req, res) => {
   res.sendFile(__dirname + '/account.html');
@@ -385,6 +418,8 @@ app.get('/MyAccountTech', isAuthenticated, isTech, isLogged, populateTech, async
   res.sendFile(__dirname + '/myaccountTech.html');
 });
 
+
+
 app.get('/api/MyAccountTech', isAuthenticated, isTech, isLogged, populateTech, async (req, res) => {
   try {
     const TechAccInfo = await Account.getTechAccInfo(db,tech.username);
@@ -422,16 +457,7 @@ try {
 });
 
 
-app.get('/api/tech_calendar', isAuthenticated, isUser, isLogged, async (req, res) => {
-  try {
-    const tech = await Tech.createTech(db,req.session.techId);
-    const availabity =await tech.getAvailability(db);
-    res.json({ data: availabity });
-  } catch (err) {
-    console.error("Error fetching calendar:", err);
-    res.status(500).send("Error occurred");
-  }
-});
+
 
 app.post('/api/tech_reserv', isAuthenticated, isUser, isLogged, async (req, res) => {
   const { start,end,selectedOption,enteredText } = req.body;
