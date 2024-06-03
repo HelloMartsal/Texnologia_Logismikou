@@ -371,7 +371,9 @@ app.post('/api/create-notification', async (req, res) => {
 app.post('/check-notifications', isAuthenticated, isUser, isLogged, populateUser, async (req, res) => {
   const username = user.username;
   try {
+    
     const notifications = await Notification.getNotifications(db, username);
+    console.log(notifications);
     res.json({ notifications });
   } catch (error) {
     console.error('Error fetching notifications:', error);

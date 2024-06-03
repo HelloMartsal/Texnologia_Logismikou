@@ -9,7 +9,7 @@
   <style>
     body {
   font-family: sans-serif;
-  margin: 0; /* Remove padding */
+  margin: 0;
 }
 
 h1 {
@@ -18,7 +18,7 @@ h1 {
 }
 
 #get-bookings {
-  background-color: #4CAF50; /* Green */
+  background-color: #4CAF50; 
   border: none;
   color: white;
   padding: 10px 20px;
@@ -33,7 +33,7 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   margin-bottom: 20px;
-  background-color: rgb(240, 240, 240); /* Light gray background for container */
+  background-color: rgb(240, 240, 240); 
 }
 
 .card {
@@ -246,10 +246,63 @@ h1 {
               window.location.href = `/change_reserv/${bookingId}`;
             });
             // Προσθήκη event listeners στα κουμπιά "Review"
+            let selectedReservationId = null;
             $(".reviewBtn").on("click", function() {
               selectedReservationId = $(this).data("id");
               $("#reviewModal").css("display", "block");
+              
             });
+            const reviewModal = $("#reviewModal");
+            const closeBtn = $(".close");
+            const submitReviewBtn = $("#submitReview");
+            const cancelReviewBtn = $("#cancelReview");
+            const reviewText = $("#reviewText");
+            const stars = $(".star");
+            let selectedRating = 0;
+            closeBtn.on("click", function() {
+              reviewModal.css("display", "none");
+            });
+
+            cancelReviewBtn.on("click", function() {
+              reviewModal.css("display", "none");
+            });
+
+            stars.on("click", function() {
+              selectedRating = $(this).data("value");
+              stars.removeClass("gold");
+              for (let i = 1; i <= selectedRating; i++) {
+                $(`.star[data-value="${i}"]`).addClass("gold");
+              }
+            });
+            submitReviewBtn.on("click", async function() {
+              const review = reviewText.val();
+              if (review && selectedRating) {
+                try {
+                  const response = await fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      reservationId: selectedReservationId,
+                      reviewText: review,
+                      reviewScore: selectedRating
+                    })
+                  });
+                  if (response.ok) {
+                    alert("Thank you for your review!");
+                    reviewModal.css("display", "none");
+                  } else {
+                    alert("Error submitting review.");
+                  }
+                } catch (error) {
+                  console.error("Error submitting review:", error);
+                }
+              } else {
+                alert("Please fill out both fields.");
+              }
+            });
+            
           },
           error: function (error) {
             console.error("An error occurred:", error);
@@ -260,63 +313,6 @@ h1 {
       }
     }
 
-    $(document).ready(function () {
-      fetchBookings();
-
-      const reviewModal = $("#reviewModal");
-      const closeBtn = $(".close");
-      const submitReviewBtn = $("#submitReview");
-      const cancelReviewBtn = $("#cancelReview");
-      const reviewText = $("#reviewText");
-      const stars = $(".star");
-      let selectedRating = 0;
-      let selectedReservationId = null;
-
-      closeBtn.on("click", function() {
-        reviewModal.css("display", "none");
-      });
-
-      cancelReviewBtn.on("click", function() {
-        reviewModal.css("display", "none");
-      });
-
-      stars.on("click", function() {
-        selectedRating = $(this).data("value");
-        stars.removeClass("gold");
-        for (let i = 1; i <= selectedRating; i++) {
-          $(`.star[data-value="${i}"]`).addClass("gold");
-        }
-      });
-
-      submitReviewBtn.on("click", async function() {
-        const review = reviewText.val();
-        if (review && selectedRating) {
-          try {
-            const response = await fetch('/api/reviews', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                reservationId: selectedReservationId,
-                reviewText: review,
-                reviewScore: selectedRating
-              })
-            });
-            if (response.ok) {
-              alert("Thank you for your review!");
-              reviewModal.css("display", "none");
-            } else {
-              alert("Error submitting review.");
-            }
-          } catch (error) {
-            console.error("Error submitting review:", error);
-          }
-        } else {
-          alert("Please fill out both fields.");
-        }
-      });
-    });
   </script>
 </body>
 </html>
