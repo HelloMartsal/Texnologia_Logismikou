@@ -531,3 +531,11 @@ BEGIN
     WHERE username_t = tech_username;
 END;
 
+create procedure getReviews(IN usern varchar(255))
+BEGIN
+  SELECT
+    ReviewText, ReviewScore
+  FROM review r
+  WHERE r.ReviewTechUsername = usern;
+END;
+
